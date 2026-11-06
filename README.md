@@ -1,5 +1,9 @@
 # Kaspa CellCloud Node
 
+**EXPERIMENTAL · TESTNET-10 ONLY · MAINNET PAYMENTS DISABLED**
+
+Release: **v0.2.0-testnet.1**. Use tKAS and non-essential test files only.
+
 Standalone Testnet-10 storage daemon for CellCloud operators. This repository
 contains the node runtime, shared protocol, Kaspa WASM bindings and node tests.
 It does not contain the React dApp, browser wallet extensions or laboratory data.
@@ -9,6 +13,8 @@ It does not contain the React dApp, browser wallet extensions or laboratory data
 Requirements: Node.js **24.x**, and the pnpm version in `package.json`.
 
 ```sh
+git clone https://github.com/bananaishere/kaspa-cellcloud-node.git
+cd kaspa-cellcloud-node
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm verify
 node bin/cellcloud-node.mjs init --out cellcloud-node.json
@@ -80,9 +86,15 @@ relative paths for the shared engine. No separate fork of payment rules is used.
 `pnpm verify` checks the recorded bytes; it is not independent authentication
 of a release. Git attributes preserve those bytes across Windows/Linux checkouts.
 
-This is a local release candidate. `private:true` prevents accidental npm
-publication. A distribution licence for CellCloud's own code has not yet been
-selected; `UNLICENSED` does not grant an open-source licence. The bundled Kaspa
-SDK retains its ISC licence and provenance files under `vendor/kaspa`.
+This is an experimental Testnet release. `private:true` prevents accidental npm
+publication; it does not change the public GitHub repository. CellCloud's own
+exported code is licensed under [MIT](LICENSE). The bundled Kaspa SDK retains
+its ISC licence and provenance files under `vendor/kaspa`.
+
+The same repository is intended to support both networks when Mainnet is ready.
+For now Mainnet storage/payment operations remain blocked. Separate networks
+must use separate operator configurations, data directories and peer links;
+running both on one computer also requires separate listening ports. Changing
+the network string does not enable Mainnet payments.
 
 Read [SECURITY.md](SECURITY.md) before operating a node.

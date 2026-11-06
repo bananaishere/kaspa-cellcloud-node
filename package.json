@@ -1,9 +1,9 @@
 {
   "name": "kaspa-cellcloud-node",
-  "version": "0.2.0",
+  "version": "0.2.0-testnet.1",
   "private": true,
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bin": {
     "cellcloud-node": "bin/cellcloud-node.mjs"
   },

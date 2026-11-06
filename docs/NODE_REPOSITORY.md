@@ -48,14 +48,16 @@ mútua por identidade. Acesso remoto requer transporte/origins válidos e ensaio
 
 ## Publicação e manutenção
 
-O nome proposto no GitHub é `bananaishere/kaspa-cellcloud-node`. A pasta local
-foi preparada separadamente; não foi criado nem publicado um repositório remoto
-nesta etapa. Não colocar na UI um link GitHub inexistente. Quando o repositório
-for criado, acrescentar o link na página Nós e testar a instalação de um clone.
+O repositório oficial é [bananaishere/kaspa-cellcloud-node](https://github.com/bananaishere/kaspa-cellcloud-node),
+criado publicamente pelo utilizador. A primeira versão tem o identificador
+`v0.2.0-testnet.1`, com avisos de Testnet-10 e Mainnet bloqueada. O link de
+instalação foi acrescentado ao componente Nós da dApp; só aparece na Vercel
+depois da atualização do frontend.
 
-O pacote usa `private:true` para evitar npm publish acidental e `UNLICENSED`
-porque a licença do código próprio ainda não foi escolhida. Não se atribuiu
-uma licença open source em nome do titular; o SDK mantém a licença ISC incluída.
+O pacote usa `private:true` para evitar npm publish acidental; isso não torna
+privado o repositório GitHub. O código próprio exportado usa a licença MIT
+combinada com o utilizador; o SDK mantém a licença ISC incluída. Não adicionar
+chaves, recibos reais, tokens ou dados de armazenamento ao repositório público.
 
 Antes de uma release, exportar para uma pasta nova, validar o diff, instalar
 com lockfile, executar os testes e conferir SOURCE_MANIFEST. Publicar tags

@@ -1,8 +1,8 @@
 # Operar um peer CellCloud
 
-O pacote autónomo para um repositório separado é preparado pelo exportador
-descrito em [NODE_REPOSITORY.md](NODE_REPOSITORY.md). Não foi publicado no GitHub
-nesta etapa. Os comandos abaixo continuam compatíveis com o código partilhado;
+O pacote autónomo está em [kaspa-cellcloud-node](https://github.com/bananaishere/kaspa-cellcloud-node),
+com primeira versão experimental `v0.2.0-testnet.1`. A preparação é descrita em
+[NODE_REPOSITORY.md](NODE_REPOSITORY.md). Os comandos abaixo continuam compatíveis com o código partilhado;
 no pacote autónomo também existe a CLI `node bin/cellcloud-node.mjs`.
 
 Etapa de preparação local, 5 novembro 2026. O runtime está no mesmo projeto que

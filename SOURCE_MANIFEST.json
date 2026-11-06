@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "sourceCommit": "a02746d82225a2746b77fcaedd0ba530a05ddcd1",
+  "sourceCommit": "4a12344787f9f429344175ef0032c173bac77bce",
+  "releaseVersion": "0.2.0-testnet.1",
+  "license": "MIT",
   "network": "testnet-10",
   "mainnetPayments": false,
   "files": [
@@ -26,13 +28,13 @@
     },
     {
       "path": "docs/NODE_REPOSITORY.md",
-      "bytes": 3520,
-      "sha256": "a985093cec8f66301cb463acb673bee8d8553469bd5ed24b4bf9f81bd9cbde33"
+      "bytes": 3658,
+      "sha256": "b84dd43dea93fa46ff1100744638059754efbb235f76df97861cda890043b701"
     },
     {
       "path": "docs/OPERATOR_NODE.md",
-      "bytes": 7446,
-      "sha256": "2c910310357961123d4a4790b2afb1d8083dc811e5c2f67327b89f15a7457554"
+      "bytes": 7504,
+      "sha256": "7b8ebd2ebc4079d0e10cff78935c3a20904fc468b04d8d219f85deb0ddcc095e"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -65,9 +67,14 @@
       "sha256": "0a084217c7a6d9e99b4e719327f60d16d597d91857001a132d54babf6324e417"
     },
     {
+      "path": "LICENSE",
+      "bytes": 1069,
+      "sha256": "c68a41bce3cfa64062a28d48c371317e4e01e43210d59a395cdc8f546ae7bcd8"
+    },
+    {
       "path": "package.json",
-      "bytes": 716,
-      "sha256": "9bd0a8e96f4ddb2cbb65fa36eb86438d3bf476f625dd8d7782cce249bdc3bff0"
+      "bytes": 719,
+      "sha256": "a5c31de7b217ca754a6389e5326ce2d2fd27c363f7865fc1084f991530b9fe3c"
     },
     {
       "path": "peer/backup.mjs",
@@ -176,8 +183,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4422,
-      "sha256": "ca739fa866ee5306eadee5dc47de8bc985f34bcd5b4c89504a6158cc17d7bdfe"
+      "bytes": 5012,
+      "sha256": "37b3bf0347f992d5c3865bcb36302cb8b04f4c027cee09e1b3062130bd5d06c4"
     },
     {
       "path": "scripts/peer-backup.mjs",
