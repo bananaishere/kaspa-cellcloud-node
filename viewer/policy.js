@@ -2,18 +2,19 @@ import {isDigest} from '../protocol/integrity.js';
 import {networkId} from '../protocol/network.js';
 import {peerUrl} from '../protocol/wire.js';
 
-export function viewerBase(configured,appOrigin){
+export function viewerBase(configured,appOrigin,{privateLocalTestnetPreview=false}={}){
  const app=new URL(appOrigin),local=['localhost','127.0.0.1','[::1]'].includes(app.hostname)||app.hostname.endsWith('.localhost');
  if(!configured&&!local)throw Error('P2P_VIEWER_ORIGIN_NOT_CONFIGURED');
  const template=configured||'http://{site}.viewer.localhost:5192';
  if(typeof template!=='string'||template.split('{site}').length!==2)throw Error('P2P_VIEWER_ORIGIN_TEMPLATE_REQUIRED');
  const url=new URL(template.replace('{site}','tn10-'+'0'.repeat(32)));
- if(!url.hostname.startsWith('tn10-'+'0'.repeat(32)+'.')||url.origin===app.origin||url.pathname!=='/'||url.search||url.hash||url.username||url.password||!['https:','http:'].includes(url.protocol)||url.protocol==='http:'&&(!local||!url.hostname.endsWith('.localhost')))throw Error('P2P_VIEWER_REQUIRES_SEPARATE_SECURE_ORIGIN');
+ const privateViewer=privateLocalTestnetPreview===true&&template==='http://{site}.viewer.localhost:5192';
+ if(!url.hostname.startsWith('tn10-'+'0'.repeat(32)+'.')||url.origin===app.origin||url.pathname!=='/'||url.search||url.hash||url.username||url.password||!['https:','http:'].includes(url.protocol)||url.protocol==='http:'&&(!local&&!privateViewer||!url.hostname.endsWith('.localhost')))throw Error('P2P_VIEWER_REQUIRES_SEPARATE_SECURE_ORIGIN');
  return url.origin.replace('tn10-'+'0'.repeat(32),'{site}');
 }
-export function viewerLink({base,appOrigin,network,id,application,name='',peers,language='en'}){
+export function viewerLink({base,appOrigin,network,id,application,name='',peers,language='en',privateLocalTestnetPreview=false}){
  if(application){if(!isDigest(application.rootManifestId)||!isDigest(application.author))throw Error('INVALID_HEAD_LINK');id=application.rootManifestId;}
- if(!isDigest(id))throw Error('INVALID_MANIFEST');networkId(network);const origin=viewerBase(base,appOrigin).replace('{site}',(network==='testnet-10'?'tn10':'main')+'-'+(application?'a-':'')+id.slice(0,32)),link=new URL('/_viewer/',origin);
+ if(!isDigest(id))throw Error('INVALID_MANIFEST');networkId(network);if(privateLocalTestnetPreview&&network!=='testnet-10')throw Error('LOCAL_PREVIEW_TESTNET_ONLY');const origin=viewerBase(base,appOrigin,{privateLocalTestnetPreview}).replace('{site}',(network==='testnet-10'?'tn10':'main')+'-'+(application?'a-':'')+id.slice(0,32)),link=new URL('/_viewer/',origin);
  if(link.origin===new URL(appOrigin).origin)throw Error('P2P_VIEWER_REQUIRES_SEPARATE_SECURE_ORIGIN');
  const selected=validatePeers(peers,{secureContext:link.protocol==='https:'});link.hash=new URLSearchParams({network:networkId(network),...(application?{app:id,author:application.author}:{manifest:id}),name:String(name).slice(0,80),peers:JSON.stringify(selected),lang:language==='pt'?'pt':'en'}).toString();return link.href;
 }

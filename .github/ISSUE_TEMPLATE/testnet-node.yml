@@ -1,0 +1,35 @@
+name: Register Testnet node
+description: Announce a public CellCloud Testnet-10 storage endpoint.
+title: "[Testnet node] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read [Join the public Testnet](https://github.com/bananaishere/kaspa-cellcloud-node/blob/main/docs/PUBLIC_TESTNET.md) first.
+        Share only the five public profile fields. Never include keys, seeds, tokens or backups.
+        The app discovers open registrations and independently checks each signed handshake.
+  - type: textarea
+    id: profile
+    attributes:
+      label: Public node profile
+      description: Replace all placeholders. This JSON is public and is read by the dApp.
+      render: json
+      value: |
+        {
+          "version": 1,
+          "networkId": "testnet-10",
+          "name": "My community node",
+          "url": "wss://YOUR-HOSTNAME/peer",
+          "nodeId": "YOUR-64-CHARACTER-PUBLIC-NODE-ID"
+        }
+    validations:
+      required: true
+  - type: checkboxes
+    id: public-confirmation
+    attributes:
+      label: Public registration
+      options:
+        - label: This profile contains only public data. I operate this endpoint and have authorized the dApp origin.
+          required: true
+        - label: I understand Testnet operation does not currently provide automatic rewards or grant replication trust.
+          required: true
