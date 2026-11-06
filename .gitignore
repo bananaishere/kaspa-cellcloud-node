@@ -1,0 +1,8 @@
+node_modules/
+.local/
+.env*
+*.private.json
+*.log
+cellcloud-node*.json
+*.pem
+*.key

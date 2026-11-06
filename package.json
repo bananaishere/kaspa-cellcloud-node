@@ -1,0 +1,28 @@
+{
+  "name": "kaspa-cellcloud-node",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "bin": {
+    "cellcloud-node": "bin/cellcloud-node.mjs"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "start": "node bin/cellcloud-node.mjs start",
+    "init": "node bin/cellcloud-node.mjs init",
+    "check": "node bin/cellcloud-node.mjs check",
+    "doctor": "node bin/cellcloud-node.mjs doctor",
+    "peer-node": "node peer/cli.mjs",
+    "verify": "node scripts/verify-release.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "ws": "8.22.1"
+  }
+}
