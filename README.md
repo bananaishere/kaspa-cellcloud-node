@@ -2,7 +2,7 @@
 
 **EXPERIMENTAL · TESTNET-10 ONLY · MAINNET PAYMENTS DISABLED**
 
-Release: **v0.2.0-testnet.2**. Use tKAS and non-essential test files only.
+Release: **v0.2.0-testnet.3**. Use tKAS and non-essential test files only.
 
 Standalone Testnet-10 storage daemon for CellCloud operators. This repository
 contains the node runtime, shared protocol, Kaspa WASM bindings and node tests.
@@ -10,7 +10,7 @@ It does not contain the React dApp, browser wallet extensions or laboratory data
 
 ## Join the public Testnet
 
-**[Open the public app — Nodes](https://kaspacellcloud.vercel.app/#nodes)** · **[Operator guide](docs/PUBLIC_TESTNET.md)**
+**[Start here — four-step guide in the app](https://kaspacellcloud.vercel.app/?operator-guide=1#nodes)** · **[Detailed guide and troubleshooting](docs/PUBLIC_TESTNET.md)**
 
 Run the node on your own machine, configure a reachable WSS endpoint, and register
 its public profile once through the app or this repository's issue form. The app
