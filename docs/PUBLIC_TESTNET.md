@@ -204,3 +204,83 @@ Sem hostname/HTTPS pronto, podes fazer a instalação e pedir ajuda no passo 2.
 Não precisas de carteira nem de pagar para registar um nó. O espaço e o processo
 pertencem à tua máquina. Os testes de leitura, retenção e replicação são posteriores
 ao registo. Não confundas ativo com armazenamento garantido.
+# Public wallet uploads (no shared token)
+
+Available from **v0.2.0-testnet.4**. Existing nodes stay private by default.
+The operator enables this once; users do not need the operator's private token.
+
+## Operator: update and enable once
+
+1. Stop your node normally (Ctrl+C in its terminal, or stop its existing service).
+   Leave your data folder, identity, configuration and HTTPS proxy intact.
+2. In your existing `kaspa-cellcloud-node` repository, run:
+
+   ```sh
+   git pull --ff-only
+   pnpm install --frozen-lockfile --ignore-scripts
+   pnpm verify
+   ```
+
+   If Git reports local changes, stop and review them. Do not reset or overwrite
+   your identity, storage or custom configuration.
+3. Add this **top-level property** to your existing `cellcloud-node.json`, keeping
+   the other settings and valid JSON commas:
+
+   ```json
+   "publicUploads": {
+     "enabled": true,
+     "maxFileBytes": 52428800,
+     "maxPendingBytes": 134217728,
+     "maxPendingPerWallet": 2,
+     "maxPendingTotal": 8
+   }
+   ```
+
+   These conservative initial settings allow 50 MiB per publication, two unpaid
+   or unconfirmed publications per wallet, eight across the node and 128 MiB of
+   encoded pending cells across the node. They are operator capacity limits,
+   separate from the application's pricing tiers. Raise the byte limits only if
+   you intend to offer more capacity; erasure coding and ZIP contents also use
+   storage. The overall node quota still applies. Signed, unconfirmed payments
+   remain pending until verified; finish existing receipts rather than paying again.
+4. Validate and start again with the same configuration:
+
+   ```sh
+   node bin/cellcloud-node.mjs check --config cellcloud-node.json
+   node bin/cellcloud-node.mjs start --config cellcloud-node.json
+   ```
+
+5. In the app's **Nodes** page, choose **Check nodes**. Your node should show
+   **Public wallet uploads available — no operator token**. Its identity and
+   registration do not change. Users connected before the update should reconnect.
+
+**Do operators repeat this for every upload? No.** The setting is saved in the
+configuration and survives restarts. Keep the node and its HTTPS proxy running.
+Update the software when a new release is needed; do not reinitialize the node.
+To stop new public admissions later, set `enabled` to `false` and restart normally.
+Existing receipts and files remain on disk; private operator access remains available.
+
+## User: authorize with the wallet
+
+Connect KasWare or Kastle on **Testnet-10**, choose an enabled node and click
+**Authorize with wallet — no payment**. Review and sign the access message. It
+binds your account to this node and app origin, using a single-use two-minute
+challenge. It is not a transaction, approval to spend funds or vault-key signature.
+Continue to **Deploy**. Payment review, transaction signing, explicit submission,
+independent confirmation and version authorization remain separate steps.
+
+The access session lasts up to one hour on that connection. After a refresh,
+disconnect, wallet change or session expiry, authorize again and resume the saved
+publication. This does not initiate another payment. No private upload token is
+stored in the browser, shared in a URL or posted to GitHub.
+
+## Testnet limits
+
+Wallet signatures identify an account, not a unique person. tKAS is not an
+anti-abuse deposit, and multiple wallets can still exhaust the bounded pending
+allowance. This release limits the damage; it does not provide Sybil resistance.
+Abandoned pending uploads are retained for recovery and currently require operator
+review if they fill the allowance. There is no automatic deletion of payment
+receipts. Do not expose unlimited storage or promise permanent availability.
+Mainnet payments remain disabled. The operator must activate this feature on
+their own node; updating the Vercel frontend alone cannot enable a remote node.

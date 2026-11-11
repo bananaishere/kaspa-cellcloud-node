@@ -7,8 +7,9 @@ import {peerUrl} from '../protocol/wire.js';
 import {isDigest} from '../protocol/integrity.js';
 import {replicaPeers} from '../protocol/replicas.js';
 import {viewerBase} from '../viewer/policy.js';
+import {publicUploadPolicy} from '../protocol/upload-admission.js';
 
-const allowed='version,network,host,port,data,quotaBytes,origins,viewerOrigins,peers,rpcUrl,logFile,publicUrl,expectedNodeId,syncIntervalMs,repairIntervalMs,reverseProxyTls,tls'.split(',');
+const allowed='version,network,host,port,data,quotaBytes,origins,viewerOrigins,peers,rpcUrl,logFile,publicUrl,expectedNodeId,syncIntervalMs,repairIntervalMs,reverseProxyTls,tls,publicUploads'.split(',');
 const loopback=host=>['127.0.0.1','localhost','::1'].includes(host);
 const check=(value,code)=>{if(!value)throw Error(code);};
 const interval=value=>Number.isSafeInteger(value)&&value>=250&&value<=3600000;
@@ -36,7 +37,8 @@ export function validateOperatorConfig(input,{directory=process.cwd()}={}){
  if(!loopback(host))check(publicUrl?.startsWith('wss://'),'REMOTE_PUBLIC_WSS_REQUIRED');
  const logFile=input.logFile?filePath(input.logFile,directory):null;
  if(logFile){const relative=path.relative(path.join(data,network),logFile);check(relative.startsWith('..'+path.sep)||relative==='..'||path.isAbsolute(relative),'LOG_FILE_OUTSIDE_NETWORK_STORAGE_REQUIRED');}
- return {version:1,network,host,port,data,quotaBytes:input.quotaBytes,origins:browserOrigins,viewerOrigins,peers,rpcUrl,logFile,publicUrl,expectedNodeId,syncIntervalMs,repairIntervalMs,reverseProxyTls,tls};
+ const publicUploads=publicUploadPolicy(input.publicUploads);check(!publicUploads.enabled||network==='testnet-10','PUBLIC_UPLOADS_TESTNET_ONLY');
+ return {version:1,network,host,port,data,quotaBytes:input.quotaBytes,origins:browserOrigins,viewerOrigins,peers,rpcUrl,logFile,publicUrl,expectedNodeId,syncIntervalMs,repairIntervalMs,reverseProxyTls,tls,publicUploads};
 }
 export async function readOperatorConfig(file){
  const absolute=path.resolve(file),stat=await fs.stat(absolute);check(stat.isFile()&&stat.size<=32768,'OPERATOR_CONFIG_LIMIT');let input;try{input=JSON.parse(await fs.readFile(absolute,'utf8'));}catch{throw Error('INVALID_OPERATOR_CONFIG_JSON');}
@@ -47,4 +49,4 @@ export async function operatorTls(config){
  try{cert=await fs.readFile(config.tls.certFile);key=await fs.readFile(config.tls.keyFile);createSecureContext({cert,key});}catch{throw Error('OPERATOR_TLS_FILES_INVALID');}
  return {cert,key};
 }
-export function operatorConfigReport(config){return {valid:true,network:config.network,host:config.host,port:config.port,data:config.data,quotaBytes:config.quotaBytes,origins:config.origins,viewerOrigins:config.viewerOrigins,replicationPeers:config.peers.length,publicUrl:config.publicUrl,tlsMode:config.tls?'direct':config.reverseProxyTls?'proxy':'loopback',identityPinned:Boolean(config.expectedNodeId),mainnetPayments:false,started:false,paymentRequested:false};}
+export function operatorConfigReport(config){return {valid:true,network:config.network,host:config.host,port:config.port,data:config.data,quotaBytes:config.quotaBytes,origins:config.origins,viewerOrigins:config.viewerOrigins,replicationPeers:config.peers.length,publicUrl:config.publicUrl,tlsMode:config.tls?'direct':config.reverseProxyTls?'proxy':'loopback',identityPinned:Boolean(config.expectedNodeId),publicUploads:config.publicUploads,mainnetPayments:false,started:false,paymentRequested:false};}

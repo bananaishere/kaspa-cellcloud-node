@@ -43,13 +43,13 @@ test('browser ingestion reads bounded stripes; Merkle proofs and parity restore 
  const changed=new File([new Uint8Array(source.length)],'images.zip');await assert.rejects(()=>encodeFileStripe(changed,publication.manifest.files[0],0),/BYTES_CHANGED/);
 });
 
-test('direct peer verifies identity, denies unauthorised/corrupt/cross-network writes, confirms only an independently checked payment and recovers after restart',async t=>{
- const directory=await temp(t),{rpc,state}=rpcFixture();let store=await new PeerStore({directory,rpc,quotaBytes:64*1024**2}).init();
+for(const publicAccess of [false,true])test((publicAccess?'wallet public admission: ':'private token: ')+'direct peer verifies identity, denies unauthorised/corrupt/cross-network writes, confirms only an independently checked payment and recovers after restart',async t=>{
+ const directory=await temp(t),{rpc,state}=rpcFixture();let store=await new PeerStore({directory,rpc,quotaBytes:64*1024**2,publicUploads:{enabled:publicAccess}}).init();
  const token=JSON.parse(await fs.readFile(store.grantPath,'utf8')).token,nodeId=store.nodeId;
  let server=await startPeerServer({store,origins:['http://127.0.0.1:5191'],viewerOrigins:['http://{site}.viewer.localhost:5192']}),peer=clientFor(server.port);t.after(async()=>{peer.close();await server.close();await rpc.close();});
  const hello=await peer.connect();assert.equal(hello.nodeId,nodeId);await assert.rejects(()=>peer.request('auth',{token}),/IDENTITY_APPROVAL/);peer.trust(hello.nodeId);
  await assert.rejects(()=>peer.request('resume',{manifestId:'ab'.repeat(32)}),/AUTHORIZATION/);
- await assert.rejects(()=>peer.request('auth',{token:'00'.repeat(32)}),/AUTHORIZATION/);await peer.request('auth',{token});
+ await assert.rejects(()=>peer.request('auth',{token:'00'.repeat(32)}),/AUTHORIZATION/);if(publicAccess){const challenge=await peer.request('uploadChallenge',{address,author_pubkey:publicKey});await peer.request('uploadAuth',{body:challenge.body,signature:k.signMessage({message:challenge.message,privateKey:key})});}else await peer.request('auth',{token});
  const wrong=clientFor(server.port,{network:'mainnet'});await assert.rejects(()=>wrong.connect(),/NETWORK_MISMATCH/);wrong.close();
  const wrongPin=clientFor(server.port,{pin:'00'.repeat(32)});await assert.rejects(()=>wrongPin.connect(),/IDENTITY_CHANGED/);wrongPin.close();
  const file=new File(['A small ZIP or document is just bytes.'],'document.txt'),publication=await analyseFiles([file],{author:publicKey});
@@ -71,7 +71,7 @@ test('direct peer verifies identity, denies unauthorised/corrupt/cross-network w
  const pending=await peer.request('confirm',{manifestId:publication.id});assert.equal(pending.state,'SIGNED');
  used=store.usedBytes;
  peer.close();await server.close();
- store=await new PeerStore({directory,rpc,quotaBytes:64*1024**2}).init();assert.equal(store.nodeId,nodeId);assert.equal(store.jobs.size,1);assert.equal(store.usedBytes,used);
+ store=await new PeerStore({directory,rpc,quotaBytes:64*1024**2,publicUploads:{enabled:publicAccess}}).init();assert.equal(store.nodeId,nodeId);assert.equal(store.jobs.size,1);assert.equal(store.usedBytes,used);
  server=await startPeerServer({store,origins:['http://127.0.0.1:5191'],viewerOrigins:['http://{site}.viewer.localhost:5192']});peer=clientFor(server.port,{pin:nodeId});await peer.connect();await peer.request('auth',{token});
  const reads=state.reads;state.entries=[];
  const resumed=await peer.request('resume',{manifestId:publication.id});assert.equal(resumed.transactionId,authorized.transactionId);assert.equal(resumed.signedJson,signedJson);assert.ok(resumed.submissionIntentAt);assert.equal(state.reads,reads);

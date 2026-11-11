@@ -107,7 +107,7 @@ O operador partilha apenas endereço e identidade pública. Em Nós pode usar
 o token. A identidade assinada demonstra controlo da chave; não prova honestidade
 do operador, retenção permanente ou disponibilidade futura.
 
-A admissão de uploads ainda usa o token privado de operador. O registo público e a descoberta automática de disponibilidade estão descritos
+A partir de v0.2.0-testnet.4, o operador pode ativar uploads públicos por assinatura de carteira em `publicUploads.enabled`. A ativação é opcional, fica guardada e exige apenas um reinício normal; os utilizadores deixam de precisar do token privado. As instruções de atualização, limites e retoma estão em [Public wallet uploads](PUBLIC_TESTNET.md#public-wallet-uploads-no-shared-token). O acesso privado por token continua disponível. O registo público e a descoberta automática de disponibilidade estão descritos
 em [PUBLIC_TESTNET.md](PUBLIC_TESTNET.md). Esse registo não autoriza uploads ou
 replicação e não implementa remuneração, retenção contratual ou PoR.
 Enviar 95% para a pool não distribui automaticamente KAS aos peers. Não anunciar

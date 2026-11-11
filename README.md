@@ -2,7 +2,7 @@
 
 **EXPERIMENTAL · TESTNET-10 ONLY · MAINNET PAYMENTS DISABLED**
 
-Release: **v0.2.0-testnet.3**. Use tKAS and non-essential test files only.
+Release: **v0.2.0-testnet.4**. Use tKAS and non-essential test files only.
 
 Standalone Testnet-10 storage daemon for CellCloud operators. This repository
 contains the node runtime, shared protocol, Kaspa WASM bindings and node tests.
@@ -16,6 +16,13 @@ Run the node on your own machine, configure a reachable WSS endpoint, and regist
 its public profile once through the app or this repository's issue form. The app
 automatically collects registrations and checks which nodes are active. You do not
 use the app creator's computer. A profile contains no upload token or private key.
+
+## Public wallet uploads (no shared token)
+
+Version **v0.2.0-testnet.4** adds opt-in wallet admission. Existing installations
+remain private until their operator enables it. Follow the [one-time activation
+and update instructions](docs/PUBLIC_TESTNET.md#public-wallet-uploads-no-shared-token).
+Never publish your private upload token.
 
 ## Install and run
 
@@ -42,9 +49,10 @@ Stop it with Ctrl+C. Restarting uses the same directory and identity.
    `expectedNodeId` in `cellcloud-node.json` to that value.
 2. In CellCloud **Nodes**, enter its endpoint, e.g.
    `ws://127.0.0.1:8080/peer`, and pin the same public node ID.
-3. For uploads, authorise the node with the private upload token from the data
-   directory. The startup log prints its file path, never the token itself.
-   Read-only viewers do not require that token.
+3. For public wallet uploads, enable `publicUploads.enabled` once, then users
+   authorize with KasWare or Kastle without your token. See the instructions above.
+   Private operator access still uses the token from the data directory; never
+   publish it. Read-only viewers need neither a token nor a wallet signature.
 4. For replication, configure mutually pinned `peers` in each operator's config.
    A neighbour is not discovered or authorised merely by installing this program.
 

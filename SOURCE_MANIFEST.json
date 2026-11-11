@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "sourceCommit": "07a725ae72d7715d5334c5ab5d46238b3fba68fb",
-  "releaseVersion": "0.2.0-testnet.3",
+  "sourceCommit": "35c14588d5ac994a0e1fb0fe3e6c0d13de32aea4",
+  "releaseVersion": "0.2.0-testnet.4",
   "license": "MIT",
   "network": "testnet-10",
   "mainnetPayments": false,
@@ -38,13 +38,13 @@
     },
     {
       "path": "docs/OPERATOR_NODE.md",
-      "bytes": 7630,
-      "sha256": "5db31fa740c4068780e4cb1b102a11d8e0bc18600f5a57123bbc9787ee469102"
+      "bytes": 8015,
+      "sha256": "e449e74e66b5815f41a21c9cf0a57b5ba20e53d9752af239a652f1d11190574f"
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 9181,
-      "sha256": "667c79918f04a79a7fe962c9fbae7504325ac6de457b9d18eeaabe11633d7d62"
+      "bytes": 13076,
+      "sha256": "517e10dfeff3e1228436ee1862dcb158c4bccfb6c82272e8a2ec4d208cfeea34"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -67,6 +67,11 @@
       "sha256": "65ecbfbef5c409a3a02723d16976bc5aeb2543b3c8308004ee51bd08c3e05861"
     },
     {
+      "path": "lab/lib/manifest-entries.mjs",
+      "bytes": 203,
+      "sha256": "5f817e634c098525bdf79df6cbd4c3e808c29b48f029f2ee280341a8d25129e2"
+    },
+    {
       "path": "lab/lib/payment-intent.mjs",
       "bytes": 1553,
       "sha256": "ebf54470c427760cd2b687a73a19273ecdf3e52dc3e5f43b106e1dcc98709fc2"
@@ -77,6 +82,11 @@
       "sha256": "0a084217c7a6d9e99b4e719327f60d16d597d91857001a132d54babf6324e417"
     },
     {
+      "path": "lab/lib/vault-format.mjs",
+      "bytes": 1664,
+      "sha256": "3f7c326cf0cfda64c3983979bac7fbd41a8989d4f4e1e3557a5fb29e4bd5e6a2"
+    },
+    {
       "path": "LICENSE",
       "bytes": 1069,
       "sha256": "c68a41bce3cfa64062a28d48c371317e4e01e43210d59a395cdc8f546ae7bcd8"
@@ -84,7 +94,7 @@
     {
       "path": "package.json",
       "bytes": 719,
-      "sha256": "348598d5688329e2791eb296bd657d4354696e6f0397476d5db00d2124c4b451"
+      "sha256": "58e89423cbd63f3db6ba3e3eb7d9445ee8e321cc69a7f24f7a8f8989c1fb6cd9"
     },
     {
       "path": "peer/backup.mjs",
@@ -93,8 +103,8 @@
     },
     {
       "path": "peer/cli.mjs",
-      "bytes": 6078,
-      "sha256": "07739230823f7fd6168c4517ab1e22c1fbad91bf2c3fae0886d9410cd9d9e487"
+      "bytes": 6116,
+      "sha256": "069c250ced52ebe60a33da01cc309864d86e5075f794952483185bace1f5df35"
     },
     {
       "path": "peer/heads.mjs",
@@ -103,8 +113,8 @@
     },
     {
       "path": "peer/operator-config.mjs",
-      "bytes": 5724,
-      "sha256": "a26ec4869df17950f034a1ccfd94dbb21e79435c4c57decb3b378599b430b4f6"
+      "bytes": 6001,
+      "sha256": "2fd894f581f26faeb67c2f5f544380b9d78774c546aea710a52ea364e0dbe2ad"
     },
     {
       "path": "peer/operator-doctor.mjs",
@@ -123,13 +133,13 @@
     },
     {
       "path": "peer/server.mjs",
-      "bytes": 9426,
-      "sha256": "9a0e0f2abe8e64247d57632da6e0e8232ff60b6d29087e65f92db312bdf6af98"
+      "bytes": 12479,
+      "sha256": "39912433c7cdeb09935f92afaff9c4d68e75f8565dbef36c2c07d3aea49fac57"
     },
     {
       "path": "peer/store.mjs",
-      "bytes": 17276,
-      "sha256": "0d12d7e3d60c6404815c5c325a4906f88b44b7d6f41d1fc925a8029bd68cf671"
+      "bytes": 18473,
+      "sha256": "e20e351a955b2a35dc2c10e93366ec0deaa2bc4e9efe1c93958a276039435ff3"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -187,14 +197,19 @@
       "sha256": "1ee0422a00b852d5aa303fce93d08ae5499393646795ca330b8ffea85f7616f6"
     },
     {
+      "path": "protocol/upload-admission.js",
+      "bytes": 3190,
+      "sha256": "573bc4e5ebf47d716c823c1acc09aaa6c8f3be746860445f65ad8ad2a25a7d18"
+    },
+    {
       "path": "protocol/wire.js",
       "bytes": 1476,
       "sha256": "bb44baf589cd055253e53594a04213cd022b36014403004fa22a76fc895cfab9"
     },
     {
       "path": "README.md",
-      "bytes": 5547,
-      "sha256": "6a30082ef3ae97176b16dd02f3f7fcc7ac2977c9ec4f9e4a6472773219c35607"
+      "bytes": 5999,
+      "sha256": "17141892f79eae42d8b2e23d6f545a54f0a61729fa3c0292879c0875b2d5bdee"
     },
     {
       "path": "scripts/peer-backup.mjs",
@@ -217,9 +232,14 @@
       "sha256": "1b40ae5ca1246df0713b02ccbbd616e3a87b6e35c3e7ed90cd2bf17e22a741a1"
     },
     {
+      "path": "src/ownership-client.js",
+      "bytes": 7098,
+      "sha256": "5ed59c0dc96aab0c321089d84a7aa9e1e2510cd8e330624725f8007ffb33a858"
+    },
+    {
       "path": "src/peer-client.js",
-      "bytes": 5919,
-      "sha256": "88e477d3b2bcf1424fd9dc30f44f04c8c46fbe300e36e7b707182c622799f52f"
+      "bytes": 6058,
+      "sha256": "0390e2480dae7fcd6bbf6c5a711588f9c3a001049ca8045031dc6f617738a893"
     },
     {
       "path": "src/peer-recovery.js",
@@ -237,9 +257,24 @@
       "sha256": "38396a045b078e29936d9b1d7b32a8ee0d0c94ff7fd39eb658542777b71445e3"
     },
     {
+      "path": "src/vault-compatibility.js",
+      "bytes": 457,
+      "sha256": "00358e5982a615a2ba6ac729ae1ecf67152a0c9cf2b782be2c64f1408ce32fd1"
+    },
+    {
+      "path": "src/vault-crypto.js",
+      "bytes": 5794,
+      "sha256": "7006cd0a4d72a6af77c52bdc0c46125cea153d21c90f5a828ab772be42fbc39f"
+    },
+    {
       "path": "src/wallet-verifier.js",
       "bytes": 6183,
       "sha256": "76f17a1e365a085341fca3af873c679102219c8d6cacbf92295551113420a670"
+    },
+    {
+      "path": "src/wallets.js",
+      "bytes": 10467,
+      "sha256": "13e4b9a76364ba1b7a3c72578f5bcc8978ea637fd49cb7c07ede75311ac7e383"
     },
     {
       "path": "test/helpers/replica-fixtures.mjs",
@@ -263,13 +298,18 @@
     },
     {
       "path": "test/peer-node.test.mjs",
-      "bytes": 11165,
-      "sha256": "19df2332f995f2e173c42d2d83bff1d1d6116e0672e7cf3ca721a560ba891d39"
+      "bytes": 11573,
+      "sha256": "a004f0151766c2244e31527653e852c4b6780124d397b7a0c0bb5c46ee068c05"
     },
     {
       "path": "test/peer-replication.test.mjs",
       "bytes": 16881,
       "sha256": "d72b8423497bd669f0c4edf9571bb5916e23e45fd26bb3e4adaff1cbb1044fe1"
+    },
+    {
+      "path": "test/upload-admission.test.mjs",
+      "bytes": 10387,
+      "sha256": "311310887f2b040c560a94dd5acf4f70302ff379eb62a53f73f337ba217fbbd6"
     },
     {
       "path": "vendor/kaspa/kaspa_bg.wasm",

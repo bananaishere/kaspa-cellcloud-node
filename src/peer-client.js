@@ -4,6 +4,7 @@ import {hash,isDigest,canonicalJson,utf8} from '../protocol/integrity.js';
 import {PROTOCOL,networkId,sameNetwork} from '../protocol/network.js';
 import {pack,unpack,peerUrl} from '../protocol/wire.js';
 import {replicaPeers} from '../protocol/replicas.js';
+import {publicUploadPolicy} from '../protocol/upload-admission.js';
 
 export class PeerClient{
  constructor({url,network='testnet-10',pin='',secureContext=false,socketFactory=value=>new WebSocket(value),timeoutMs=30000}){
@@ -33,6 +34,7 @@ export class PeerClient{
    if(b.cellBytes!==128*1024||b.data!==10||b.total!==30)throw Error('PEER_CODEC_INCOMPATIBLE');
    if(this.pin&&this.pin!==b.nodeId)throw Error('PEER_IDENTITY_CHANGED');
    replicaPeers(b.replicas||[],b.nodeId);
+   if(b.publicUploads!==undefined)publicUploadPolicy(b.publicUploads);
    this.hello=b;this.trusted=Boolean(this.pin);return b;
   }catch(error){this.close();throw error;}
  }

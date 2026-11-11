@@ -31,7 +31,7 @@ let logQueue=Promise.resolve();const logFile=values['log-file']?path.resolve(val
 const log=record=>{const text=JSON.stringify({at:new Date().toISOString(),...record});console.log(text);if(logFile)logQueue=logQueue.then(()=>fs.appendFile(logFile,text+'\n',{mode:0o600})).catch(()=>console.error('PEER_LOG_WRITE_FAILED'));};
 const rpc=new DirectKaspaClient({sdk,network:values.network,url:values.rpc||''});let store,server,replicator;
 try{
- store=await new PeerStore({directory:values.data,network:values.network,quotaBytes,rpc}).init();
+ store=await new PeerStore({directory:values.data,network:values.network,quotaBytes,rpc,publicUploads:operator?.publicUploads}).init();
  if(operator?.expectedNodeId&&operator.expectedNodeId!==store.nodeId)throw Error('CONFIGURED_NODE_IDENTITY_MISMATCH');
  let peers=operator?.peers||[];if(values['peers-file']){const raw=await fs.readFile(values['peers-file'],'utf8');if(Buffer.byteLength(raw)>16384)throw Error('REPLICA_CONFIG_LIMIT');const config=JSON.parse(raw);if(config.version!==1||config.networkId!==store.network||Object.keys(config).sort().join(',')!=='networkId,peers,version')throw Error('INVALID_REPLICA_CONFIG');peers=config.peers;}
  replicator=new PeerReplicator({store,peers,intervalMs:Number(values['sync-interval-ms']),repairIntervalMs:Number(values['repair-interval-ms']),log});

@@ -10,6 +10,7 @@ import {PROTOCOL,networkId,requirePaymentNetwork} from '../protocol/network.js';
 import {accountScript} from '../src/wallet-verifier.js';
 import {PeerHeads} from './heads.mjs';
 import {updateIntent} from '../lab/lib/payment-intent.mjs';
+import {publicUploadPolicy} from '../protocol/upload-admission.js';
 
 export async function atomic(file,value){
  const temp=file+'.'+randomUUID()+'.tmp',handle=await fs.open(temp,'wx',0o600);
@@ -19,10 +20,11 @@ export async function atomic(file,value){
  if(process.platform!=='win32'){const directory=await fs.open(path.dirname(file),'r');try{await directory.sync();}finally{await directory.close();}}
 }
 export class PeerStore{
- constructor({directory,network='testnet-10',quotaBytes=1024**3,rpc,now=()=>Date.now()}){
+ constructor({directory,network='testnet-10',quotaBytes=1024**3,rpc,now=()=>Date.now(),publicUploads}){
   if(!Number.isSafeInteger(quotaBytes)||quotaBytes<CELL*N)throw Error('INVALID_STORAGE_QUOTA');
   Object.assign(this,{directory:path.resolve(directory),network:networkId(network),quotaBytes,rpc,now});this.jobs=new Map();this.manifests=new Map();this.usedBytes=0;this.queue=Promise.resolve();
   this.replicaPeers=[];this.replicaReservedBytes=0;
+  this.publicUploads=publicUploadPolicy(publicUploads);if(this.publicUploads.enabled&&this.network!=='testnet-10')throw Error('PUBLIC_UPLOADS_TESTNET_ONLY');
  }
  async init(){
   await fs.mkdir(this.directory,{recursive:true,mode:0o700});
@@ -64,6 +66,7 @@ export class PeerStore{
  hello(nonce){
   if(!isDigest(nonce))throw Error('INVALID_HELLO_NONCE');
   const body={protocol:PROTOCOL,networkId:this.network,nodeId:this.nodeId,publicKey:this.publicKey,nonce,cellBytes:CELL,data:K,total:N,quotaBytes:this.quotaBytes,usedBytes:this.usedBytes,paymentVerification:Boolean(this.rpc),writesEnabled:!this.recoveryReadOnly&&this.network==='testnet-10'&&Boolean(this.rpc),timestamp:this.now(),replicaChallenge:randomBytes(32).toString('hex'),replicas:this.replicaPeers};
+  body.publicUploads=this.publicUploads;
   return {body,signature:bytesToHex(ed25519.sign(utf8(canonicalJson(body)),this.secret))};
  }
  validateJob(job,id){
@@ -80,7 +83,7 @@ export class PeerStore{
   await atomic(file,serialized);this.usedBytes+=size-prior;this.jobs.set(job.id,job);return job;
  }
  job(id){if(!isDigest(id)||!this.jobs.has(id))throw Error('PUBLICATION_NOT_FOUND');return this.jobs.get(id);}
- async open({manifestText,id,address,name,update}){
+ async open({manifestText,id,address,name,update},admission){
   if(this.recoveryReadOnly)throw Error('RECOVERY_VERIFICATION_ONLY');
   requirePaymentNetwork(this.network);if(!this.rpc)throw Error('PEER_PAYMENT_RPC_REQUIRED');
   if(typeof manifestText!=='string'||Buffer.byteLength(manifestText)>16*1024**2||hash(manifestText)!==id)throw Error('MANIFEST_HASH_MISMATCH');
@@ -95,6 +98,14 @@ export class PeerStore{
     if(name!==this.heads.current(context.rootManifestId).name)throw Error('INVALID_HEAD_NAME');
     if([...this.jobs.values()].some(j=>j.update?.rootManifestId===context.rootManifestId&&j.update.revision===context.revision))throw Error('UPDATE_ALREADY_STAGED');
    }
+   if(admission){
+    const p=this.publicUploads;if(!p.enabled||admission.author_pubkey!==manifest.author_pubkey||admission.address!==address)throw Error('UPLOAD_OWNER_REQUIRED');
+    const pending=[...this.jobs.values()].filter(j=>j.publicAdmission&&j.state!=='CONFIRMED');
+    if(summary.sizeBytes>p.maxFileBytes)throw Error('PUBLIC_UPLOAD_SIZE_LIMIT');
+    if(pending.filter(j=>j.manifest.author_pubkey===admission.author_pubkey).length>=p.maxPendingPerWallet||pending.length>=p.maxPendingTotal)throw Error('PUBLIC_UPLOAD_PENDING_LIMIT');
+    const footprint=job=>new Set(this.metadata(job).entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))).size*CELL;
+    if(pending.reduce((total,j)=>total+footprint(j),0)+new Set(summary.entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))).size*CELL>p.maxPendingBytes)throw Error('PUBLIC_UPLOAD_PENDING_BYTES_LIMIT');
+   }
    if(this.jobs.size>=128)throw Error('STAGED_PUBLICATION_LIMIT');
    const digests=new Set(summary.entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))),missing=[];
    for(const digest of digests){try{await fs.access(this.base('cells',digest));}catch{missing.push(digest);}}
@@ -102,7 +113,7 @@ export class PeerStore{
    // It does not advertise unimplemented partial-distribution guarantees.
    const reserved=[...this.jobs.values()].filter(j=>j.state==='STAGED').reduce((sum,j)=>sum+(j.reservedBytes||0),0);
    if(this.usedBytes+reserved+this.replicaReservedBytes+missing.length*CELL+Buffer.byteLength(manifestText)+512*1024>this.quotaBytes)throw Error('STORAGE_QUOTA_EXCEEDED');
-   const job={version:1,networkId:this.network,id,name,address,manifest,state:'STAGED',createdAt:this.now(),reservedBytes:missing.length*CELL,...(context?{update:context}:{})};
+   const job={version:1,networkId:this.network,id,name,address,manifest,state:'STAGED',createdAt:this.now(),reservedBytes:missing.length*CELL,...(admission?{publicAdmission:true}:{}),...(context?{update:context}:{})};
    await this.save(job);return this.summary(job);
   });
  }
