@@ -32,9 +32,11 @@ export async function startPeerServer({store,host='127.0.0.1',port=0,origins=[],
   if(closing||req.url!=='/peer'||!allowed.has(req.headers.origin)&&!viewer&&!replica||wss.clients.size>=16){socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');socket.destroy();return;}
   wss.handleUpgrade(req,socket,head,ws=>wss.emit('connection',ws,req));
  });
- wss.on('connection',(ws,req)=>{
-  const readOnly=readOnlyViewerOrigin(req.headers.origin,viewerOrigins);
-  const replicaOnly=req.headers.origin===REPLICA_ORIGIN;
+ wss.on('connection',(ws,req)=>attach(ws,req.headers.origin,{
+  readOnly:readOnlyViewerOrigin(req.headers.origin,viewerOrigins),
+  replicaOnly:req.headers.origin===REPLICA_ORIGIN
+ }));
+ function attach(ws,origin,{readOnly=false,replicaOnly=false,relayed=false}={}){
   let greeted=false,authenticated=false,replicaAuthenticated=false,replicaChallenge,uploadChallenge,uploadSession,authAttempts=0,queue=Promise.resolve(),waiting=0;ws.alive=true;
   ws.on('error',()=>{});ws.on('pong',()=>ws.alive=true);
   const send=value=>{if(ws.readyState===1)ws.send(JSON.stringify(value));};
@@ -70,16 +72,16 @@ export async function startPeerServer({store,host='127.0.0.1',port=0,origins=[],
        if(readOnly||!store.publicUploads.enabled||store.recoveryReadOnly||!store.rpc)throw Error('PUBLIC_UPLOADS_DISABLED');
        if(++authAttempts>8)throw Error('UPLOAD_AUTH_RATE_LIMIT');
        if(store.now()-authWindow>=60000){authWindow=store.now();authCount=0;}if(++authCount>64)throw Error('UPLOAD_AUTH_RATE_LIMIT');
-       const now=store.now(),body={protocol:'cellcloud-upload-access',version:1,networkId:store.network,nodeId:store.nodeId,origin:req.headers.origin,address:args.address,author_pubkey:args.author_pubkey,policy:store.publicUploads,issuedAt:now,expiresAt:now+120000,nonce:randomBytes(32).toString('hex')};
-       const challenge={body,message:uploadAdmissionMessage(body)};verifyUploadChallenge(challenge,{nodeId:store.nodeId,origin:req.headers.origin,address:args.address,author_pubkey:args.author_pubkey},{now});uploadChallenge=challenge;result=uploadChallenge;
+       const now=store.now(),body={protocol:'cellcloud-upload-access',version:1,networkId:store.network,nodeId:store.nodeId,origin,address:args.address,author_pubkey:args.author_pubkey,policy:store.publicUploads,issuedAt:now,expiresAt:now+120000,nonce:randomBytes(32).toString('hex')};
+       const challenge={body,message:uploadAdmissionMessage(body)};verifyUploadChallenge(challenge,{nodeId:store.nodeId,origin,address:args.address,author_pubkey:args.author_pubkey},{now});uploadChallenge=challenge;result=uploadChallenge;
       }
       else if(request.operation==='uploadAuth'){
        const challenge=uploadChallenge;uploadChallenge=null;
        if(readOnly||!store.publicUploads.enabled||!challenge||canonicalJson(args.body)!==canonicalJson(challenge.body))throw Error('INVALID_UPLOAD_CHALLENGE');
-       const b=verifyUploadSignature(challenge,args.signature,{nodeId:store.nodeId,origin:req.headers.origin,address:challenge.body.address,author_pubkey:challenge.body.author_pubkey},{now:store.now()});
+       const b=verifyUploadSignature(challenge,args.signature,{nodeId:store.nodeId,origin,address:challenge.body.address,author_pubkey:challenge.body.author_pubkey},{now:store.now()});
        uploadSession={address:b.address,author_pubkey:b.author_pubkey,expiresAt:store.now()+60*60*1000};authenticated=true;result={authenticated:true,mode:'wallet',expiresAt:uploadSession.expiresAt};
       }
-      else if(request.operation==='auth'){if(readOnly)throw Error('UPLOAD_AUTHORIZATION_REQUIRED');store.auth(args.token);authenticated=true;uploadSession=null;result={authenticated:true};}
+      else if(request.operation==='auth'){if(readOnly||relayed)throw Error('UPLOAD_AUTHORIZATION_REQUIRED');store.auth(args.token);authenticated=true;uploadSession=null;result={authenticated:true};}
       else if(request.operation==='replicaStatus'){result=store.replicationStatus?.()||{enabled:false,networkId:store.network,peers:[],conflicts:[]};}
       else if(request.operation==='publicationStatus'){store.publication(args.manifestId);result=store.publicationReplication?.(args.manifestId)||{manifestId:args.manifestId,networkId:store.network,peers:[]};}
       else if(request.operation==='manifest'){result=store.publication(args.manifestId);}
@@ -117,9 +119,22 @@ export async function startPeerServer({store,host='127.0.0.1',port=0,origins=[],
    }).catch(()=>ws.close(1011,'PEER_FAILURE'));
    const task=queue;tasks.add(task);task.then(()=>tasks.delete(task));
   });
- });
+ }
  const heartbeat=setInterval(()=>{for(const ws of wss.clients){if(!ws.alive){ws.terminate();continue;}ws.alive=false;ws.ping();}},30000);heartbeat.unref();
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.off('error',reject);resolve();});});
  const address=server.address();
- return {port:address.port,server,close:async()=>{closing=true;clearInterval(heartbeat);for(const ws of wss.clients)ws.terminate();await new Promise(resolve=>wss.close(resolve));await Promise.all([...tasks]);await new Promise(resolve=>server.close(resolve));await store.queue;store.close();}};
+ function acceptRelay(socket,origin,readOnly){
+  if(closing||!allowed.has(origin))throw Error('INVALID_RELAY_ORIGIN');
+  attach({
+   get readyState(){return socket.readyState;},
+   send:data=>socket.send(data),
+   close:()=>socket.close(),
+   on(event,listener){
+    if(event==='message')socket.addEventListener('message',({data})=>listener(
+     typeof data==='string'?Buffer.from(data,'utf8'):Buffer.from(data),typeof data!=='string'
+    ));
+   }
+  },origin,{readOnly,relayed:true});
+ }
+ return {port:address.port,server,acceptRelay,close:async()=>{closing=true;clearInterval(heartbeat);for(const ws of wss.clients)ws.terminate();await new Promise(resolve=>wss.close(resolve));await Promise.all([...tasks]);await new Promise(resolve=>server.close(resolve));await store.queue;store.close();}};
 }

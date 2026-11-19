@@ -1,5 +1,6 @@
 import {CELL} from './codec.js';
 import {canonicalJson,utf8} from './integrity.js';
+import {relayPeer} from './relay-address.js';
 export const HEADER_LIMIT=8192,FRAME_LIMIT=CELL+HEADER_LIMIT+4;
 export function pack(header,bytes=new Uint8Array()){
  const encoded=utf8(canonicalJson(header));
@@ -15,6 +16,7 @@ export function unpack(frame){
  return {header,bytes:frame.subarray(4+size)};
 }
 export function peerUrl(value,{secureContext=false}={}){
+ const relay=relayPeer(value,{secureContext});if(relay)return relay.url;
  const url=new URL(value),local=['127.0.0.1','localhost','[::1]'].includes(url.hostname);
  if(!['ws:','wss:'].includes(url.protocol)||url.username||url.password||url.hash||url.search||url.pathname!=='/peer'||url.protocol==='ws:'&&(!local||secureContext))throw Error('PEER_REQUIRES_WSS_OR_LOCAL_WS');
  return url.href;

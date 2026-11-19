@@ -6,7 +6,53 @@ The guide has commands to copy, configuration downloads, expected results and a
 public-only support summary. Choose Install and connect my node on the Nodes page
 to reopen it. Read the detailed reference below only when you need extra help.
 
-## The short version
+## Quick start through a community relay
+
+Use **Nodes → Start setup → Quick start**. This uses an outbound connection
+from the storage node and works behind a home router without opening ports.
+The guide downloads a configuration when the app has a relay configured.
+
+1. Install Git, Node.js 24 and the pinned pnpm version. Clone the node repo
+   and run the verification command shown in the guide.
+2. Choose a disk quota and whether to accept Testnet wallet uploads. For a
+   new installation, save the downloaded configuration in the node folder.
+   For an existing node, back up the configuration, copy the `relays` list,
+   and put the app's HTTPS origin first in `origins`. Keep the existing
+   `data` and `expectedNodeId` values.
+3. Run `cellcloud-node check` and `cellcloud-node start` as shown in the
+   guide. When the terminal reports `relay-ready`, copy its `publicUrl`
+   and `nodeId`. Keep the node process running. If a relay is unreachable,
+   the node periodically retries and also attempts any other configured relay.
+4. Save the profile under **Nodes**. To announce it to other people, review and
+   submit the GitHub registration. Once the browser verifies the node's
+   identity, select **Use this node** and try a public Testnet upload and read.
+
+The relay routes a Noise-encrypted connection. It can observe connection
+metadata and stop traffic. The browser checks the public node ID and verifies
+publication integrity. Choosing your node controls where the initial upload
+goes. Public deployments remain public, and availability with your machine
+off requires a copy on another reachable node. Relay-based operator tokens,
+private vaults, and storage-to-storage replication are outside this pilot.
+
+### Operating a Testnet relay
+
+A relay operator supplies a public HTTPS hostname and WebSocket reverse proxy.
+From the node distribution, run:
+
+```sh
+node peer/relay-service.mjs .local/relay-key.private.json relay.example.org 8090
+```
+
+Create the `.local` directory first. Keep the relay identity file private and
+reuse it to keep the same public peer ID across restarts. Proxy the entire
+relay hostname to `127.0.0.1:8090`; the libp2p WebSocket listener uses the
+root path. The terminal prints a `wss://…/relay/<peer-id>` descriptor for
+`VITE_TESTNET_RELAYS` in the frontend build. Use separate operators for
+redundancy. Up to three descriptors can be supplied, separated by commas.
+The service caps reservations and per-circuit time and bytes. Validate uploads
+and fresh reads from an independent network before listing a relay publicly.
+
+## Advanced setup with a direct connection
 
 1. **Install:** Git, Node.js 24, pnpm 11.25.0, then clone and verify this repository.
 2. **Prepare your endpoint:** use your own public hostname and HTTPS access. The
@@ -136,9 +182,16 @@ registration removes this discovery entry on the next successful registry refres
 already known neighbours may still advertise that node.
 
 Registration is discovery, not a storage trust grant. It does not authorize
-replication, uploads or payments. Uploads currently require the operator's private
-upload authorization, shared privately with intended testers. Never put that code
-in the issue. A node can be active for reads without accepting writes.
+replication, uploads or payments. When an operator enables public wallet uploads,
+Deploy connects a pinned available node and requests a free wallet message only
+when its upload session needs authorization. Users do not need an operator token
+or a detour through Nodes. The session is wallet/socket-bound, kept in memory and
+expires after one hour; a reload or reconnection needs a fresh message. Pending
+publications resume on their original node without repeating payment. Private
+nodes retain their separate operator-token access; never publish that token.
+A node can be active for reads without accepting writes. Existing replication
+still requires operator-configured peers; discovery does not enroll a node into
+automatic storage replication.
 
 For serving app/site URLs, a separate publication-isolated HTTPS viewer is still
 required; the node must allow its exact viewer origin templates. An entry marked

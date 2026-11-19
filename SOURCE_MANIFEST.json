@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "sourceCommit": "35c14588d5ac994a0e1fb0fe3e6c0d13de32aea4",
-  "releaseVersion": "0.2.0-testnet.4",
+  "sourceCommit": "e2ce7cd0e8c283a9fd9fb3181f50d5dedb007b3d",
+  "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
   "mainnetPayments": false,
@@ -43,8 +43,8 @@
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 13076,
-      "sha256": "517e10dfeff3e1228436ee1862dcb158c4bccfb6c82272e8a2ec4d208cfeea34"
+      "bytes": 16181,
+      "sha256": "dd7d0a645b710d1c743cfed223c83ce755ac9374e2d5212e7c43b43837afb390"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -93,8 +93,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 719,
-      "sha256": "58e89423cbd63f3db6ba3e3eb7d9445ee8e321cc69a7f24f7a8f8989c1fb6cd9"
+      "bytes": 1038,
+      "sha256": "b4862bdb88ca89347373900eefedb3963ba4bae689345fc74fe577ee1548564d"
     },
     {
       "path": "peer/backup.mjs",
@@ -103,8 +103,8 @@
     },
     {
       "path": "peer/cli.mjs",
-      "bytes": 6116,
-      "sha256": "069c250ced52ebe60a33da01cc309864d86e5075f794952483185bace1f5df35"
+      "bytes": 6347,
+      "sha256": "7d1114602c1c931e059cb80c1c5113998ccf6ab95a86daf3b05682ddf8b48e87"
     },
     {
       "path": "peer/heads.mjs",
@@ -113,13 +113,23 @@
     },
     {
       "path": "peer/operator-config.mjs",
-      "bytes": 6001,
-      "sha256": "2fd894f581f26faeb67c2f5f544380b9d78774c546aea710a52ea364e0dbe2ad"
+      "bytes": 6622,
+      "sha256": "8cab7a46b694bab1535f0248d49f6727e261280d7fa14ea86df40886e7e8a3a6"
     },
     {
       "path": "peer/operator-doctor.mjs",
       "bytes": 1049,
       "sha256": "6d59d15a197f4d4b06ae8fdcafda49de1fd849af400251b35122611451c40653"
+    },
+    {
+      "path": "peer/relay-node.mjs",
+      "bytes": 2379,
+      "sha256": "ff57faa21fcba97f6c4fd28bc5cb6d84398c6883a76f0c7a22b12579223111e7"
+    },
+    {
+      "path": "peer/relay-service.mjs",
+      "bytes": 1776,
+      "sha256": "2d1c11a0dccc84b10877345a4a4fec5fc34e78a4763dcd5be26e820cd6cf26e2"
     },
     {
       "path": "peer/replica-data.mjs",
@@ -133,8 +143,8 @@
     },
     {
       "path": "peer/server.mjs",
-      "bytes": 12479,
-      "sha256": "39912433c7cdeb09935f92afaff9c4d68e75f8565dbef36c2c07d3aea49fac57"
+      "bytes": 13033,
+      "sha256": "3f837673b8858ec7b8f83c7f7cc3e0b3368abfc98a4f52ac9ab058645e2e9e0c"
     },
     {
       "path": "peer/store.mjs",
@@ -143,8 +153,8 @@
     },
     {
       "path": "pnpm-lock.yaml",
-      "bytes": 29477,
-      "sha256": "f80000ac7ca3bb65571b0b241bc6fceb044b96ed9410f701f9bea8e4e7e477da"
+      "bytes": 58997,
+      "sha256": "1c485a47b6a48552f047f31c9c236b7eadf72f77f3074abf39deb4f3f32a87f0"
     },
     {
       "path": "protocol/codec.js",
@@ -187,6 +197,16 @@
       "sha256": "d3937b007fa8c78d54722945a7d1eb7095ed41680f565b4c948b7aa82c494e8e"
     },
     {
+      "path": "protocol/relay-address.js",
+      "bytes": 2004,
+      "sha256": "4557b48075c0247b7ab71ae8ac77a9f3b777ee272375c4a39742a53fc8e96606"
+    },
+    {
+      "path": "protocol/relay-transport.js",
+      "bytes": 2589,
+      "sha256": "5c0012dba523cded1ab3c28c42a1f873a59356bd8418d42ab51140f5bde92772"
+    },
+    {
       "path": "protocol/replicas.js",
       "bytes": 2531,
       "sha256": "eb22841a438a103b3710c5cc0f798cee4821e25e86feef9259a8dee672038095"
@@ -203,13 +223,13 @@
     },
     {
       "path": "protocol/wire.js",
-      "bytes": 1476,
-      "sha256": "bb44baf589cd055253e53594a04213cd022b36014403004fa22a76fc895cfab9"
+      "bytes": 1595,
+      "sha256": "d823d9120c2bf8a5ca42f88fe03b73ddabd4c989c1c63ce539923d25ca456c23"
     },
     {
       "path": "README.md",
-      "bytes": 5999,
-      "sha256": "17141892f79eae42d8b2e23d6f545a54f0a61729fa3c0292879c0875b2d5bdee"
+      "bytes": 6092,
+      "sha256": "4fa2d225d77d894039dd81471eaea899e47a245e37f60a2444045a67dbbb2d57"
     },
     {
       "path": "scripts/peer-backup.mjs",
@@ -238,8 +258,8 @@
     },
     {
       "path": "src/peer-client.js",
-      "bytes": 6058,
-      "sha256": "0390e2480dae7fcd6bbf6c5a711588f9c3a001049ca8045031dc6f617738a893"
+      "bytes": 6468,
+      "sha256": "32ff92e1deada80d88a23d5a259a2e1f65d4c95cdd5e16b2197ba2fd746efd9d"
     },
     {
       "path": "src/peer-recovery.js",
@@ -250,6 +270,11 @@
       "path": "src/peer-replica-status.js",
       "bytes": 1291,
       "sha256": "ea94d6b69842de2009eaf089c658894f8a4ba5e0a848a6ff63850ecc80453b71"
+    },
+    {
+      "path": "src/relay-socket.js",
+      "bytes": 1551,
+      "sha256": "b5bd3da5d7876c096e29313ee3c124b92a2f6ee689a224c59a96d188b15fe31c"
     },
     {
       "path": "src/upload-policy.js",
@@ -302,6 +327,11 @@
       "sha256": "a004f0151766c2244e31527653e852c4b6780124d397b7a0c0bb5c46ee068c05"
     },
     {
+      "path": "test/peer-relay.test.mjs",
+      "bytes": 3969,
+      "sha256": "e1a84368173059be0bbb0e9f48d2a0f74405db3ec6ae30a05b66b6abb2fa30da"
+    },
+    {
       "path": "test/peer-replication.test.mjs",
       "bytes": 16881,
       "sha256": "d72b8423497bd669f0c4edf9571bb5916e23e45fd26bb3e4adaff1cbb1044fe1"
@@ -345,6 +375,11 @@
       "path": "vendor/kaspa/SHA256SUMS.json",
       "bytes": 422,
       "sha256": "a74ba38db45702781d8f1ce3d1a1f88f8ecf0915ca69a9911f8a9e39c24384c0"
+    },
+    {
+      "path": "viewer/compact-file-link.js",
+      "bytes": 3366,
+      "sha256": "8edd7f863ceaacd85c10311145ca9216df2282dd865090039304718244ace42f"
     },
     {
       "path": "viewer/heads.js",

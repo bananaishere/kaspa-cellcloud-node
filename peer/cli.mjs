@@ -29,14 +29,18 @@ const lock=path.resolve(values.data,networkId(values.network),'node.lock');await
 try{lockHandle=await fs.open(lock,'wx',0o600);await lockHandle.writeFile(String(process.pid));}catch{throw Error('NODE_DATA_DIRECTORY_ALREADY_LOCKED: verify the process before removing node.lock after an unclean shutdown.');}
 let logQueue=Promise.resolve();const logFile=values['log-file']?path.resolve(values['log-file']):null;if(logFile)await fs.mkdir(path.dirname(logFile),{recursive:true});
 const log=record=>{const text=JSON.stringify({at:new Date().toISOString(),...record});console.log(text);if(logFile)logQueue=logQueue.then(()=>fs.appendFile(logFile,text+'\n',{mode:0o600})).catch(()=>console.error('PEER_LOG_WRITE_FAILED'));};
-const rpc=new DirectKaspaClient({sdk,network:values.network,url:values.rpc||''});let store,server,replicator;
+const rpc=new DirectKaspaClient({sdk,network:values.network,url:values.rpc||''});let store,server,replicator,relayNode;
 try{
  store=await new PeerStore({directory:values.data,network:values.network,quotaBytes,rpc,publicUploads:operator?.publicUploads}).init();
  if(operator?.expectedNodeId&&operator.expectedNodeId!==store.nodeId)throw Error('CONFIGURED_NODE_IDENTITY_MISMATCH');
  let peers=operator?.peers||[];if(values['peers-file']){const raw=await fs.readFile(values['peers-file'],'utf8');if(Buffer.byteLength(raw)>16384)throw Error('REPLICA_CONFIG_LIMIT');const config=JSON.parse(raw);if(config.version!==1||config.networkId!==store.network||Object.keys(config).sort().join(',')!=='networkId,peers,version')throw Error('INVALID_REPLICA_CONFIG');peers=config.peers;}
  replicator=new PeerReplicator({store,peers,intervalMs:Number(values['sync-interval-ms']),repairIntervalMs:Number(values['repair-interval-ms']),log});
  server=await startPeerServer({store,host:values.host,port,origins:values.origin||['http://127.0.0.1:5191','http://localhost:5191'],viewerOrigins:values['viewer-origin-template']||['http://{site}.viewer.localhost:5192'],tls,log});replicator.start();
+ if(operator?.relays.length){
+  const {startRelayNode}=await import('./relay-node.mjs');
+  relayNode=await startRelayNode({store,server,relays:operator.relays,origin:operator.origins[0],log});
+ }
 }catch(error){await replicator?.close();await server?.close();store?.close();await rpc.close();await lockHandle.close();await fs.rm(lock,{force:true});throw error;}
 log({event:'listening',networkId:store.network,nodeId:store.nodeId,host:values.host,port:server.port,tls:Boolean(tls),...(operator?.publicUrl?{configuredPublicUrl:operator.publicUrl,wanVerified:false}:{}),uploadTokenFile:store.grantPath,mainnetPayments:false});
-let closing=false;async function close(){if(closing)return;closing=true;await replicator.close();await server.close();await rpc.close();await lockHandle.close();await fs.rm(lock,{force:true});await logQueue;}
+let closing=false;async function close(){if(closing)return;closing=true;await relayNode?.close();await replicator.close();await server.close();await rpc.close();await lockHandle.close();await fs.rm(lock,{force:true});await logQueue;}
 process.on('SIGINT',()=>close().then(()=>process.exit(0)));process.on('SIGTERM',()=>close().then(()=>process.exit(0)));

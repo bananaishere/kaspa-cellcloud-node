@@ -5,14 +5,20 @@ import {PROTOCOL,networkId,sameNetwork} from '../protocol/network.js';
 import {pack,unpack,peerUrl} from '../protocol/wire.js';
 import {replicaPeers} from '../protocol/replicas.js';
 import {publicUploadPolicy} from '../protocol/upload-admission.js';
+import {relayPeer} from '../protocol/relay-address.js';
 
 export class PeerClient{
- constructor({url,network='testnet-10',pin='',secureContext=false,socketFactory=value=>new WebSocket(value),timeoutMs=30000}){
-  Object.assign(this,{url:peerUrl(url,{secureContext}),network:networkId(network),pin,socketFactory,timeoutMs});this.pending=new Map();this.sequence=0;this.trusted=false;this.socket=null;
+ constructor({url,network='testnet-10',pin='',secureContext=false,socketFactory,timeoutMs=30000,relayReadOnly=false}){
+  Object.assign(this,{url:peerUrl(url,{secureContext}),network:networkId(network),pin,socketFactory,timeoutMs,relayReadOnly});this.pending=new Map();this.sequence=0;this.trusted=false;this.socket=null;
+  this.relay=relayPeer(this.url,{secureContext});
+  if(this.relay&&(this.network!=='testnet-10'||!isDigest(pin)))throw Error('RELAY_REQUIRES_PINNED_TESTNET_NODE');
  }
  async connect(){
   if(this.socket)throw Error('PEER_ALREADY_CONNECTED');
-  const socket=this.socketFactory(this.url);this.socket=socket;socket.binaryType='arraybuffer';
+  const socket=this.socketFactory?this.socketFactory(this.url):this.relay?
+   (await import('./relay-socket.js')).openRelaySocket(this.relay,{readOnly:this.relayReadOnly,timeoutMs:this.timeoutMs}):
+   new WebSocket(this.url);
+  this.socket=socket;socket.binaryType='arraybuffer';
   socket.addEventListener('message',event=>{
    try{
     if(typeof event.data==='string'&&event.data.length>18*1024**2)throw Error('PEER_RESPONSE_LIMIT');
