@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "e2ce7cd0e8c283a9fd9fb3181f50d5dedb007b3d",
+  "sourceCommit": "ec56cca02df1b4930b3837f285c5d993151a5d3b",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -43,8 +43,8 @@
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 16181,
-      "sha256": "dd7d0a645b710d1c743cfed223c83ce755ac9374e2d5212e7c43b43837afb390"
+      "bytes": 14242,
+      "sha256": "61322284ab6e666750e88eaa486cae2f89430377eb47e851b202c7890d821ce5"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -228,8 +228,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6092,
-      "sha256": "4fa2d225d77d894039dd81471eaea899e47a245e37f60a2444045a67dbbb2d57"
+      "bytes": 6058,
+      "sha256": "a7f3957012dc4c8b35183a339fda07fc031100500e52fc8c00860b6b4ab537e1"
     },
     {
       "path": "scripts/peer-backup.mjs",
