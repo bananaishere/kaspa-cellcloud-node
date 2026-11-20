@@ -3,7 +3,7 @@
 **New operator? [Open the four-step in-app guide](https://kaspacellcloud.vercel.app/?operator-guide=1#nodes).**
 
 The guide has commands to copy, configuration downloads, expected results and a
-public-only support summary. Choose Install and connect my node on the Nodes page
+public-only support summary. Open **Nodes → Connect a public node → Start setup**
 to reopen it. Read the detailed reference below only when you need extra help.
 
 ## Choose how to use your node
@@ -118,9 +118,9 @@ network can reach it; the public app performs its own signed handshake.
 
 ## 4. Register once
 
-Open the app's **Nodes → Register my node**. Enter your display name, WSS endpoint
-and public `nodeId`. Save the profile, review the public-only confirmation and
-use **Publish registration on GitHub**. Submit the resulting issue.
+Open **Nodes → Connect a public node → I already run a node**. Enter your display
+name, WSS endpoint and public `nodeId`. Save the profile, review the public-only
+confirmation and select **Publish registration on GitHub**. Submit the resulting issue.
 
 Alternatively use the repository's **Issues → New issue → Register Testnet node**
 and paste the public JSON profile:
@@ -269,7 +269,7 @@ The operator enables this once; users do not need the operator's private token.
    node bin/cellcloud-node.mjs start --config cellcloud-node.json
    ```
 
-5. In the app's **Nodes** page, choose **Check nodes**. Your node should show
+5. In **Nodes → Community nodes**, expand the network options and select **Check nodes**. Your node should show
    **Public wallet uploads available — no operator token**. Its identity and
    registration do not change. Users connected before the update should reconnect.
 
@@ -281,12 +281,11 @@ Existing receipts and files remain on disk; private operator access remains avai
 
 ## User: authorize with the wallet
 
-Connect KasWare or Kastle on **Testnet-10**, choose an enabled node and click
-**Authorize with wallet — no payment**. Review and sign the access message. It
-binds your account to this node and app origin, using a single-use two-minute
-challenge. It is not a transaction, approval to spend funds or vault-key signature.
-Continue to **Deploy**. Payment review, transaction signing, explicit submission,
-independent confirmation and version authorization remain separate steps.
+Connect KasWare, Kastle or Kaspire on **Testnet-10**, then prepare a file in
+**Deploy**. The app selects a compatible public node and prompts for a storage
+access signature when needed. This access message binds your account to the node
+and app origin. Payment review, transaction signing, explicit submission,
+independent confirmation and version authorization follow separately.
 
 The access session lasts up to one hour on that connection. After a refresh,
 disconnect, wallet change or session expiry, authorize again and resume the saved

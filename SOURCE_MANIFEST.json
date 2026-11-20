@@ -43,8 +43,8 @@
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 14242,
-      "sha256": "61322284ab6e666750e88eaa486cae2f89430377eb47e851b202c7890d821ce5"
+      "bytes": 14209,
+      "sha256": "47ecb540e6745eaeb9490bc45b2814afffcd089e3a99715fd40392bded032adc"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -228,8 +228,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6058,
-      "sha256": "a7f3957012dc4c8b35183a339fda07fc031100500e52fc8c00860b6b4ab537e1"
+      "bytes": 6171,
+      "sha256": "34cd8e4d1f1076c3014044bc9c303702f951afabc7c53bc5064c993592f3dffe"
     },
     {
       "path": "scripts/peer-backup.mjs",

@@ -44,16 +44,17 @@ Stop it with Ctrl+C. Restarting uses the same directory and identity.
 
 ## Connect it to the dApp
 
-1. Start the node and obtain its public `nodeId` from the startup log. Set
-   `expectedNodeId` in `cellcloud-node.json` to that value.
-2. In CellCloud **Nodes**, enter its endpoint, e.g.
-   `ws://127.0.0.1:8080/peer`, and pin the same public node ID.
-3. For public wallet uploads, enable `publicUploads.enabled` once, then users
-   authorize with KasWare or Kastle without your token. See the instructions above.
-   Private operator access still uses the token from the data directory; never
-   publish it. Read-only viewers need neither a token nor a wallet signature.
-4. For replication, configure mutually pinned `peers` in each operator's config.
-   A neighbour is not discovered or authorised merely by installing this program.
+- **Public node:** Open **Nodes → Connect a public node** and complete the guide.
+  Start the node behind a reachable WSS endpoint, pin its public `nodeId`
+  in `expectedNodeId`, and register the public profile on GitHub.
+  To accept public deployments, enable `publicUploads.enabled` in the node config.
+  The dApp automatically selects a compatible node in **Deploy**. Users can
+  authorize storage with KasWare, Kastle or Kaspire on Testnet-10.
+- **Private node:** In the local app on your computer, connect your Testnet-10 wallet
+  and open **Nodes → My private node**. Enter the local endpoint, check its
+  identity and authorize with your private upload token. Keep the token private.
+- **Replication:** Configure mutually pinned `peers` in each operator's config.
+  Public registration helps the app discover nodes. It does not grant replication trust.
 
 The node must stay online. A localhost address works only on its computer.
 For remote access, use a reachable WSS endpoint with valid TLS, exact allowed
@@ -91,7 +92,7 @@ Mainnet uploads/payments remain disabled. Testnet support is not proof of a
 production-ready public network. Kaspa RPC nodes/miners do not automatically
 store CellCloud cells. Files are stored by CellCloud operators, not inside Kaspa
 L1 blocks. Sending a payment to the configured pool does not automatically pay
-operators. Public discovery, operator remuneration, retention contracts and a
+operators. Operator remuneration, retention contracts and a
 complete Proof of Retrievability incentive protocol are not provided here.
 
 ## Provenance and release status
