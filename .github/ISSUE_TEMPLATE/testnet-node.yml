@@ -6,6 +6,8 @@ body:
     attributes:
       value: |
         Read [Join the public Testnet](https://github.com/bananaishere/kaspa-cellcloud-node/blob/main/docs/PUBLIC_TESTNET.md) first.
+        Keep the `[Testnet node]` title prefix and add your node name after it. For example: `[Testnet node] Blockzero`.
+        Submit the issue and keep it open for discovery. The form puts your profile in a JSON code block.
         Share only the five public profile fields. Never include keys, seeds, tokens or backups.
         The app discovers open registrations and independently checks each signed handshake.
   - type: textarea

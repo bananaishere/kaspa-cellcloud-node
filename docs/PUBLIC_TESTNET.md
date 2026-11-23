@@ -123,7 +123,9 @@ name, WSS endpoint and public `nodeId`. Save the profile, review the public-only
 confirmation and select **Publish registration on GitHub**. Submit the resulting issue.
 
 Alternatively use the repository's **Issues → New issue → Register Testnet node**
-and paste the public JSON profile:
+and paste the public JSON profile. Keep the issue open and use the exact title
+format `[Testnet node] Your node name`. The profile must be in a fenced
+`json` block. The GitHub form adds that formatting automatically:
 
 ```json
 {
@@ -158,6 +160,29 @@ nodes retain their separate operator-token access; never publish that token.
 A node can be active for reads without accepting writes. Existing replication
 still requires operator-configured peers; discovery does not enroll a node into
 automatic storage replication.
+
+### Troubleshoot your registration
+
+- **Missing from the list:** Check that the issue was submitted and is open,
+  that the title starts with `[Testnet node] ` and that the body has one
+  fenced `json` block containing the public profile. Wait about two minutes
+  or reload the Nodes page.
+- **Listed as unavailable:** Check the running process, WSS address, TLS
+  certificate, allowed app origin and the registered `nodeId`.
+- **Online, available for reads:** Public uploads are optional. To accept
+  community deployments, set `publicUploads.enabled` to `true`, keep a
+  storage limit, and restart the node. Check available capacity. Keep the
+  private upload token on your machine.
+
+### Optional k@sMail service
+
+The mail service can run on the same machine as the file node. Download the
+[k@sMail operator kit](https://kasmail-cellcloud-nodes-bananalab360.vercel.app/kasmail-operator-testnet.zip)
+and follow its README to start the service at a public HTTPS endpoint ending in
+`/kasmail/v1/`. Submit its separate public profile in an open GitHub issue
+titled `[Testnet mail] Your node name`, with the profile in one fenced
+`json` block. The Testnet-10 pilot currently uses the verified Kakaroto mail
+node. A new mail registration makes the profile available for verification.
 
 For serving app/site URLs, a separate publication-isolated HTTPS viewer is still
 required; the node must allow its exact viewer origin templates. An entry marked
