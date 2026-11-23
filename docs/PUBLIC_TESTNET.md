@@ -184,6 +184,29 @@ titled `[Testnet mail] Your node name`, with the profile in one fenced
 `json` block. The Testnet-10 pilot currently uses the verified Kakaroto mail
 node. A new mail registration makes the profile available for verification.
 
+#### Roadmap: mail delivery across independent operators
+
+The goal is for multiple Testnet-10 operators to serve the same mailboxes.
+The current public pilot has one delivery node. Multi-operator delivery is
+planned and still needs an Internet test.
+
+1. **Verify and admit nodes.** Discover open `[Testnet mail]` profiles. Verify
+   each node's signed challenge, public identity and approved pilot origin
+   before adding it to the delivery network.
+2. **Replicate encrypted mail.** Store copies of the same encrypted message on
+   independent nodes and keep signed mailbox records and receipts consistent.
+   Require two distinct signed storage acknowledgements
+   for a replicated send. Keep messages pending when there are too few
+   acknowledgements so a retry can continue with the same message ID.
+3. **Test recovery.** With two independent operators, send a test message,
+   take one node offline with its operator's cooperation, and read the message
+   from the remaining copy. Add a third independent node to test completing
+   new sends with the two required acknowledgements during one outage. Verify
+   recovery and absence of duplicate messages after the node returns.
+4. **Show mail availability in CellCloud.** Add an **Accepting k@sMail** card
+   to **Nodes → Network availability**. Count online, verified nodes admitted
+   for mail delivery. GitHub registrations alone do not count.
+
 For serving app/site URLs, a separate publication-isolated HTTPS viewer is still
 required; the node must allow its exact viewer origin templates. An entry marked
 active proves a recent handshake, not retention or a completed external deployment.
