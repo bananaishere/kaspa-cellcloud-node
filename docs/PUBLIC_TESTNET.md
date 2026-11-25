@@ -2,9 +2,11 @@
 
 **New operator? [Open the four-step in-app guide](https://kaspacellcloud.vercel.app/?operator-guide=1#nodes).**
 
+[Windows installer guide](../windows/README.md) · [Portuguese walkthrough](START_HERE.pt.md)
+
 The guide has commands to copy, configuration downloads, expected results and a
-public-only support summary. Open **Nodes → Connect a public node → Start setup**
-to reopen it. Read the detailed reference below only when you need extra help.
+public-only support summary. Open **Nodes → Connect a public node** and choose
+**Install a new node** or **I already run a node**.
 
 ## Choose how to use your node
 
@@ -20,6 +22,8 @@ to reopen it. Read the detailed reference below only when you need extra help.
 
 ## Public node with a direct connection
 
+If you already operate a node, go straight to [Connect an existing node](#connect-an-existing-node).
+
 1. **Install:** Git, Node.js 24, pnpm 11.25.0, then clone and verify this repository.
 2. **Prepare your endpoint:** use your own public hostname and HTTPS access. The
    app generates cellcloud-node.json and Caddyfile; save both in the node folder.
@@ -32,6 +36,23 @@ to reopen it. Read the detailed reference below only when you need extra help.
 Registration does not require a wallet or payment. Running the software alone does
 not configure your DNS/router. Active status is a fresh response, not a retention
 guarantee. Mainnet remains disabled.
+
+## Connect an existing node
+
+<details>
+<summary>Show connection and registration steps</summary>
+
+1. Keep the service running. Use **Check connection** in the Windows program,
+   or run `node bin/cellcloud-node.mjs doctor --config cellcloud-node.json` with
+   the path your service uses. Confirm the network, WSS endpoint and Node ID.
+2. If the node is already registered, check **Nodes → Network availability**.
+   For first-time registration, open **Connect a public node → I already run a
+   node** and submit its existing public profile.
+3. To accept deployments, enable wallet-authorized community uploads in
+   Windows or set `publicUploads.enabled` in the config and restart the service.
+   Keep the same data directory and identity.
+
+</details>
 
 ## Quick examples
 
@@ -53,6 +74,9 @@ operator rewards are not implemented.
 
 ## 1. Install the node
 
+<details>
+<summary>Show prerequisites and installation commands</summary>
+
 Install Node.js 24 and pnpm at the version in `package.json`, then:
 
 ```sh
@@ -63,7 +87,12 @@ pnpm verify
 node bin/cellcloud-node.mjs init --out cellcloud-node.json
 ```
 
+</details>
+
 ## 2. Make your endpoint reachable
+
+<details>
+<summary>Show DNS, port forwarding and Caddy configuration</summary>
 
 Use a hostname you control, pointing to the machine running your node. It can be
 your own computer or a host you operate. DNS, incoming connections and HTTPS must
@@ -99,11 +128,23 @@ handled by the reverse proxy. Do not disable certificate validation or publish
 the node's private key or upload token. Direct node TLS is also supported; see
 [operator configuration](OPERATOR_NODE.md).
 
+</details>
+
 ## 3. Start and check
+
+<details>
+<summary>Show startup and diagnostic commands</summary>
 
 ```sh
 node bin/cellcloud-node.mjs check --config cellcloud-node.json
 node bin/cellcloud-node.mjs start --config cellcloud-node.json
+```
+
+For a public node using the generated proxy configuration, run Caddy in a
+separate terminal from the same folder:
+
+```sh
+caddy run --adapter caddyfile --config Caddyfile
 ```
 
 The startup log shows the public `nodeId`. Copy it into `expectedNodeId` in the
@@ -116,7 +157,12 @@ node bin/cellcloud-node.mjs doctor --config cellcloud-node.json
 Keep the process running. A successful local diagnostic is not proof that another
 network can reach it; the public app performs its own signed handshake.
 
+</details>
+
 ## 4. Register once
+
+<details>
+<summary>Show public registration steps</summary>
 
 Open **Nodes → Connect a public node → I already run a node**. Enter your display
 name, WSS endpoint and public `nodeId`. Save the profile, review the public-only
@@ -140,6 +186,8 @@ format `[Testnet node] Your node name`. The profile must be in a fenced
 Only these five fields are accepted. Never include seeds, private identity files,
 upload tokens, passwords, backups or logs. No transaction or wallet is required
 to register a node. This repository is public: the profile is public too.
+
+</details>
 
 ## 5. Automatic visibility
 

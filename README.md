@@ -12,6 +12,11 @@ It does not contain the React dApp, browser wallet extensions or laboratory data
 
 **[Start here — four-step guide in the app](https://kaspacellcloud.vercel.app/?operator-guide=1#nodes)** · **[Detailed guide and troubleshooting](docs/PUBLIC_TESTNET.md)**
 
+**[Guia passo a passo em português](docs/START_HERE.pt.md)** · **[Windows installer guide](windows/README.md)** · **[Releases](https://github.com/bananaishere/kaspa-cellcloud-node/releases)**
+
+**[Download the Windows x64 test installer](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.9/CellCloud-Node-Testnet-0.2.0-testnet.9-Windows-x64.exe)** ·
+[Release notes and SHA-256](https://github.com/bananaishere/kaspa-cellcloud-node/releases/tag/windows-testnet.9)
+
 Run the node on your own machine. For a public node, configure a reachable WSS endpoint and register its profile once through the app or this repository's issue form. For private use, connect through the local app. The app
 automatically collects registrations and checks which nodes are active. You do not
 use the app creator's computer. A profile contains no upload token or private key.

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {execFile} from 'node:child_process';
 import WebSocket from 'ws';
 import {PeerStore} from '../peer/store.mjs';
 import {startPeerServer} from '../peer/server.mjs';
@@ -18,6 +19,7 @@ import {sdk as k} from '../lab/kaspa/payment.mjs';
 import {verifyStorageReceipt} from '../protocol/storage-receipt.js';
 import {publicationCopies} from '../src/peer-replica-status.js';
 import {verifyRecoveredReceipt} from '../src/peer-recovery.js';
+import {operatorTemplate} from '../protocol/operator-template.js';
 
 async function pair(t,{shared=true,quota=64*1024**2}={}){
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'cellcloud-replicas-')),acceptedA=new Set(),acceptedB=shared?acceptedA:new Set(),nodes=[];
@@ -86,12 +88,23 @@ test('replica descriptors preserve pinned failover links while rejecting duplica
 });
 
 test('publication copy status requires a recent signed full-cell check by the pinned online neighbour; an index entry alone never counts',async t=>{
- const {a,b}=await pair(t),v1=await publishFixture(a.store,a.ledger),meta=a.store.metadata(a.store.job(v1.id));
+ const {a,b,directory}=await pair(t),v1=await publishFixture(a.store,a.ledger),meta=a.store.metadata(a.store.job(v1.id));
  const descriptor={url:b.url,nodeId:b.store.nodeId},record={id:v1.id,nodeId:a.store.nodeId,network:'testnet-10',transactionId:v1.transactionId};
+ const settings=path.join(directory,'public-testnet');
+ await fs.mkdir(settings);
+ await fs.writeFile(path.join(settings,'node.json'),JSON.stringify({...operatorTemplate(),port:a.server.port,expectedNodeId:a.store.nodeId,peers:[descriptor]}));
+ const desktopCopy=()=>new Promise((resolve,reject)=>{
+  const child=execFile(process.execPath,[path.resolve(import.meta.dirname,'../windows/operator.mjs'),'replica-copy'],{timeout:15000},(error,stdout)=>{
+   if(error)reject(error);else resolve(JSON.parse(stdout));
+  });
+  child.stdin.end(JSON.stringify({isPublic:true,hostname:'node.example.com',name:'Fixture',quotaGiB:1,port:a.server.port,folder:directory,manifestId:v1.id})+'\n');
+ });
  await a.sync.synchronize({force:true});assert.equal(publicationCopies(a.sync.publication(v1.id),record,meta,[descriptor]).verified,0);
+ assert.equal((await desktopCopy()).verified,0);
  await b.sync.synchronize({force:true});await a.sync.synchronize({force:true});
  const report=a.sync.publication(v1.id),receipt=report.peers[0].receipt;
  assert.equal(publicationCopies(report,record,meta,[descriptor]).verified,1);
+ assert.equal((await desktopCopy()).verified,1);
  assert.equal(publicationCopies(report,record,meta,[descriptor],{now:Date.now()+121000}).verified,0);
  const offline=structuredClone(report);offline.peers[0].online=false;assert.equal(publicationCopies(offline,record,meta,[descriptor]).verified,0);
  const altered=structuredClone(report);altered.peers[0].receipt.body.transactionId='ee'.repeat(32);assert.equal(publicationCopies(altered,record,meta,[descriptor]).verified,0);
