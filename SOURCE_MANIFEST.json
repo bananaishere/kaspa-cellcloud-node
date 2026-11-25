@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "f412fc65a227ba711d3591200f6d1b9b48cdc861",
+  "sourceCommit": "2a814d87ac2ab170a766cd65333ea28bdab78f67",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -58,13 +58,13 @@
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 18505,
-      "sha256": "13b3e59021661baa2581fb53d56d2dc1f32d0c1cb9d85f2b65d036c441c34ed2"
+      "bytes": 19585,
+      "sha256": "349f416fcb1461cbbe003183dc75de20894f4be8a82d00c03669a0f90e68d03b"
     },
     {
       "path": "docs/START_HERE.pt.md",
-      "bytes": 10372,
-      "sha256": "7cb303e9305a88062fce99b94fa3f57d03d77b83fd6a5adae6344eb4d38156a9"
+      "bytes": 11704,
+      "sha256": "846927a9ba4b7ba3941abd60ba7d79c57b9d9b5ceecd32555cda7700a57ea24a"
     },
     {
       "path": "lab/kaspa/payment.mjs",
