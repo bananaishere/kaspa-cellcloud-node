@@ -98,6 +98,24 @@ Use a hostname you control, pointing to the machine running your node. It can be
 your own computer or a host you operate. DNS, incoming connections and HTTPS must
 work from other networks. A `localhost` address cannot be registered publicly.
 
+1. Point DNS to your public IPv4 address. For a changing IP, configure
+   [DuckDNS](https://www.duckdns.org/install.jsp) or another dynamic DNS provider.
+   Keep the update token private.
+2. Find your PC's LAN IPv4 address and reserve it in the router's DHCP settings.
+   Under **Port Forwarding**, add TCP 80 to 80 and TCP 443 to 443, targeting the
+   PC. For start and end fields, enter the same port in both.
+3. With two routers doing NAT, add both rules on both routers. On the ISP
+   router, forward to the second router's WAN IPv4 address. On the second,
+   forward to the PC's LAN address. If CGNAT or an ISP restriction blocks
+   incoming connections, ask the ISP about inbound connectivity.
+4. Test HTTPS from mobile data, then run the WSS diagnostic. A 404 at the
+   hostname root is expected for a node with a valid HTTPS certificate.
+
+The Windows installer includes and starts Caddy for a public node. With a
+terminal install, start Caddy separately. The defaults 8080 for files and
+8081 for k@sMail are local. Mail on the same hostname reuses public TCP 80
+and 443.
+
 Edit `cellcloud-node.json`, keeping the generated storage paths and quotas:
 
 ```json

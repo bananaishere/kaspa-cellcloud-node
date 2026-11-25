@@ -25,11 +25,8 @@ Inclui Node.js e Caddy. Se preferires não usar o instalador, o percurso
 Segue esta instalação se ainda não tens um nó a correr. Se já o tens
 instalado, passa diretamente a [Já tenho um nó](#já-tenho-um-nó).
 
-1. Aponta o domínio para o IP público da ligação. Encaminha TCP 80 e 443 até ao
-   PC. Com dois routers, encaminha do router da operadora para o IP WAN do
-   segundo router, e deste para o IP local do PC. A porta 8080 fica local. Se
-   estiveres em CGNAT ou sem acesso ao primeiro router, fala com a operadora
-   sobre ligações externas.
+1. Segue a secção [Domínio, portas do router e HTTPS](#domínio-portas-do-router-e-https).
+   O instalador já inclui o Caddy e inicia-o com o nó público.
 2. Abre CellCloud Node e escolhe **Público da comunidade**. Introduz nome,
    domínio e limite de espaço. Ativa **Aceitar uploads da comunidade por
    carteira** se quiseres receber novos deploys.
@@ -42,6 +39,33 @@ instalado, passa diretamente a [Já tenho um nó](#já-tenho-um-nó).
 5. Confirma o estado em **Nós → Disponibilidade da rede → Consultar nós da comunidade**. **Ligado** significa
    identidade verificada. **Disponível para novos deploys** também exige
    uploads ativos e espaço livre. Mantém o programa ligado.
+
+</details>
+
+## Domínio, portas do router e HTTPS
+
+<details>
+<summary>Mostrar os passos de rede para um nó público</summary>
+
+1. Aponta o domínio para o IPv4 público da ligação. Se esse IP muda, podes
+   usar [DuckDNS](https://www.duckdns.org/install.jsp) ou outro serviço DDNS.
+   Configura a atualização do IP e guarda o token em privado.
+2. No Windows, executa `ipconfig` para ver o IPv4 local do PC na ligação
+   ativa. Reserva esse endereço nas definições de DHCP do router.
+3. No router, abre **Port Forwarding** ou **Encaminhamento de portas**.
+   Cria duas regras TCP, uma de 80 externa para 80 interna e outra de 443
+   externa para 443 interna. Nos campos início e fim, repete a mesma porta.
+   Com um router, o destino é o IPv4 local do PC.
+4. Com dois routers a fazer NAT, cria as duas regras em ambos. No router
+   da operadora, o destino é o IP WAN do segundo router. No segundo, o
+   destino é o IPv4 local do PC. Se não tens acesso ao primeiro router ou
+   estás em CGNAT, pergunta à operadora se podes receber ligações de entrada.
+5. Depois de iniciares o nó e o Caddy, abre o domínio por HTTPS nos dados
+   móveis. Um 404 na raiz é normal se o certificado for válido. Usa a
+   verificação do instalador ou o diagnóstico do terminal para testar WSS.
+
+As portas predefinidas 8080 (ficheiros) e 8081 (k@sMail) ficam dentro do PC.
+O Caddy recebe as ligações externas e encaminha-as para o serviço certo.
 
 </details>
 
@@ -81,8 +105,8 @@ Mantém o terminal na pasta `kaspa-cellcloud-node` para os passos seguintes.
 <details>
 <summary>2. Configurar um nó público ou privado</summary>
 
-**Público:** prepara o domínio e encaminha TCP 80 e 443 para a máquina, como
-no percurso Windows. Na app, abre **Nós → Ligar um nó público → Instalar um
+**Público:** segue os passos de [domínio e router](#domínio-portas-do-router-e-https).
+Na app, abre **Nós → Ligar um nó público → Instalar um
 nó novo → Instalar por terminal**. No passo do endereço público, indica o
 domínio, o espaço e se queres aceitar uploads. Descarrega
 `cellcloud-node.json` e `Caddyfile` para a pasta do repositório. Se já
@@ -184,14 +208,14 @@ pasta. Conserva o diretório de dados para manter a identidade e o conteúdo.
 
 Usa a instalação Windows para o nó público. Na pasta do repositório do nó,
 com o percurso por terminal já instalado, cria um nó privado separado na
-porta 8081:
+porta 8082:
 
 ```powershell
-node bin/cellcloud-node.mjs init --out .local/private-8081/node.json --port 8081
-node bin/cellcloud-node.mjs start --config .local/private-8081/node.json
+node bin/cellcloud-node.mjs init --out .local/private-8082/node.json --port 8082
+node bin/cellcloud-node.mjs start --config .local/private-8082/node.json
 ```
 
-O nó privado usa `ws://127.0.0.1:8081/peer`. A pasta de configuração separada
+O nó privado usa `ws://127.0.0.1:8082/peer`. A pasta de configuração separada
 mantém os dados e a identidade separados dos do nó público. Só o nó público
 precisa do domínio, do Caddy e do encaminhamento de portas.
 
@@ -227,10 +251,12 @@ com o nó parado, ou em `rpcUrl` no JSON.
 <details>
 <summary>Ativar e registar no programa Windows</summary>
 
-1. Para o nó e seleciona **Público da comunidade**. Ativa **k@sMail** e
-   escolhe uma porta local diferente da porta do nó de ficheiros.
+1. Para o nó e seleciona **Público da comunidade**. Ativa **k@sMail** e usa
+   a porta local predefinida 8081 se estiver livre. Os ficheiros usam 8080
+   por defeito.
 2. Usa **Iniciar → Verificar k@sMail**. O programa configura a rota
-   `/kasmail/v1/` no mesmo domínio HTTPS e guarda o correio noutra pasta.
+   `/kasmail/v1/` no mesmo domínio HTTPS, reutiliza as regras TCP 80 e 443
+   do router e guarda o correio noutra pasta.
 3. Usa **Abrir registo de correio** e submete a issue. A aprovação do perfil
    de correio no piloto é um passo separado.
 
