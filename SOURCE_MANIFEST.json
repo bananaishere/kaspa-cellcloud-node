@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "ec56cca02df1b4930b3837f285c5d993151a5d3b",
+  "sourceCommit": "f412fc65a227ba711d3591200f6d1b9b48cdc861",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -13,8 +13,8 @@
     },
     {
       "path": ".github/ISSUE_TEMPLATE/testnet-node.yml",
-      "bytes": 1370,
-      "sha256": "1510eb99758f9ff840b2c5f5b9c8b888c72889fbc8e5fda67b4373ad9b263ee7"
+      "bytes": 1597,
+      "sha256": "08a2ab6babf95a89d678a6691f8c948f63862b460508034472c6794366932b83"
     },
     {
       "path": ".github/workflows/check.yml",
@@ -25,6 +25,21 @@
       "path": ".gitignore",
       "bytes": 82,
       "sha256": "21f8cfeb89aaef4e2d451dff888a6c8c533a3dfae642453f6036effd21a29720"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1069,
+      "sha256": "c68a41bce3cfa64062a28d48c371317e4e01e43210d59a395cdc8f546ae7bcd8"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6675,
+      "sha256": "631382f7a691d7b8de4e9666caa042df7a7abff61357ade3f3c48b3571fd3f83"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 1469,
+      "sha256": "1b40ae5ca1246df0713b02ccbbd616e3a87b6e35c3e7ed90cd2bf17e22a741a1"
     },
     {
       "path": "bin/cellcloud-node.mjs",
@@ -43,8 +58,13 @@
     },
     {
       "path": "docs/PUBLIC_TESTNET.md",
-      "bytes": 14209,
-      "sha256": "47ecb540e6745eaeb9490bc45b2814afffcd089e3a99715fd40392bded032adc"
+      "bytes": 18505,
+      "sha256": "13b3e59021661baa2581fb53d56d2dc1f32d0c1cb9d85f2b65d036c441c34ed2"
+    },
+    {
+      "path": "docs/START_HERE.pt.md",
+      "bytes": 10372,
+      "sha256": "7cb303e9305a88062fce99b94fa3f57d03d77b83fd6a5adae6344eb4d38156a9"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -85,11 +105,6 @@
       "path": "lab/lib/vault-format.mjs",
       "bytes": 1664,
       "sha256": "3f7c326cf0cfda64c3983979bac7fbd41a8989d4f4e1e3557a5fb29e4bd5e6a2"
-    },
-    {
-      "path": "LICENSE",
-      "bytes": 1069,
-      "sha256": "c68a41bce3cfa64062a28d48c371317e4e01e43210d59a395cdc8f546ae7bcd8"
     },
     {
       "path": "package.json",
@@ -227,11 +242,6 @@
       "sha256": "d823d9120c2bf8a5ca42f88fe03b73ddabd4c989c1c63ce539923d25ca456c23"
     },
     {
-      "path": "README.md",
-      "bytes": 6171,
-      "sha256": "34cd8e4d1f1076c3014044bc9c303702f951afabc7c53bc5064c993592f3dffe"
-    },
-    {
       "path": "scripts/peer-backup.mjs",
       "bytes": 687,
       "sha256": "ed696b99e1ba07c38d8a45d32733987760ae8fd2ebd43d3e08fc3b246b6bdac1"
@@ -245,11 +255,6 @@
       "path": "scripts/verify-release.mjs",
       "bytes": 1394,
       "sha256": "abc529f6bb39ba3a6977157d66e3c5b49aaea377363b2a99f1fbf2ad550c78ea"
-    },
-    {
-      "path": "SECURITY.md",
-      "bytes": 1469,
-      "sha256": "1b40ae5ca1246df0713b02ccbbd616e3a87b6e35c3e7ed90cd2bf17e22a741a1"
     },
     {
       "path": "src/ownership-client.js",
@@ -333,8 +338,8 @@
     },
     {
       "path": "test/peer-replication.test.mjs",
-      "bytes": 16881,
-      "sha256": "d72b8423497bd669f0c4edf9571bb5916e23e45fd26bb3e4adaff1cbb1044fe1"
+      "bytes": 17786,
+      "sha256": "581f0ac56e021e8be81edf7450a83f650d23dc04b4acaef699a6d3bc40e1f09a"
     },
     {
       "path": "test/upload-admission.test.mjs",
@@ -342,9 +347,19 @@
       "sha256": "311310887f2b040c560a94dd5acf4f70302ff379eb62a53f73f337ba217fbbd6"
     },
     {
-      "path": "vendor/kaspa/kaspa_bg.wasm",
-      "bytes": 11463668,
-      "sha256": "c9657568610ae1d305bc2e1cf85208ceba0d1a7893c4057b38caa8add2ffb0f5"
+      "path": "vendor/kaspa/LICENSE",
+      "bytes": 749,
+      "sha256": "fb06b99a835c4cdade7f2f180fd87c0198d552cf1e0cd14c34716411b009a92f"
+    },
+    {
+      "path": "vendor/kaspa/PROVENANCE.md",
+      "bytes": 447,
+      "sha256": "55c9dd379f81d5834026e9d67612042056740aec5717e3a097ef2d08de71eef6"
+    },
+    {
+      "path": "vendor/kaspa/SHA256SUMS.json",
+      "bytes": 422,
+      "sha256": "a74ba38db45702781d8f1ce3d1a1f88f8ecf0915ca69a9911f8a9e39c24384c0"
     },
     {
       "path": "vendor/kaspa/kaspa.d.ts",
@@ -357,24 +372,14 @@
       "sha256": "6d92cb305d0cc2eb26de9e305b7f7a8c17daa130ad478f0b340b50490557dbcf"
     },
     {
-      "path": "vendor/kaspa/LICENSE",
-      "bytes": 749,
-      "sha256": "fb06b99a835c4cdade7f2f180fd87c0198d552cf1e0cd14c34716411b009a92f"
+      "path": "vendor/kaspa/kaspa_bg.wasm",
+      "bytes": 11463668,
+      "sha256": "c9657568610ae1d305bc2e1cf85208ceba0d1a7893c4057b38caa8add2ffb0f5"
     },
     {
       "path": "vendor/kaspa/package.json",
       "bytes": 372,
       "sha256": "8b61fefaba842c41b805291d95b2f9e81778ec590813a6c34eddcd316659b8d0"
-    },
-    {
-      "path": "vendor/kaspa/PROVENANCE.md",
-      "bytes": 447,
-      "sha256": "55c9dd379f81d5834026e9d67612042056740aec5717e3a097ef2d08de71eef6"
-    },
-    {
-      "path": "vendor/kaspa/SHA256SUMS.json",
-      "bytes": 422,
-      "sha256": "a74ba38db45702781d8f1ce3d1a1f88f8ecf0915ca69a9911f8a9e39c24384c0"
     },
     {
       "path": "viewer/compact-file-link.js",
@@ -390,6 +395,41 @@
       "path": "viewer/policy.js",
       "bytes": 7373,
       "sha256": "fd8648106d78499d6f2ccf5b23bfca8adc7548a08b499b93ad2db110f96da9d1"
+    },
+    {
+      "path": "windows/NodeWindow.cs",
+      "bytes": 35581,
+      "sha256": "4f436c4f71139519d5d60e2c72ab1d22ef58d6b1f233ca8b1497cf2d5316e41d"
+    },
+    {
+      "path": "windows/README.md",
+      "bytes": 4300,
+      "sha256": "1769a1405a50ba7f2837a514b8352af5d4d0df96ded46c9b5f4e3c43c995178a"
+    },
+    {
+      "path": "windows/build.ps1",
+      "bytes": 3664,
+      "sha256": "ebb713bea0c143cef2e5b7a39dea21a04f557b13665783e55b5a2e51f93880b2"
+    },
+    {
+      "path": "windows/installer.iss",
+      "bytes": 1000,
+      "sha256": "9c369970c423f32cc1188680257549f06b322533a42f51965dee2069d8431583"
+    },
+    {
+      "path": "windows/mail.mjs",
+      "bytes": 3047,
+      "sha256": "9f5b8298e7c6082f85f499bb5c514c5f53e7409cb51b08eb57406d708f6264e5"
+    },
+    {
+      "path": "windows/operator.mjs",
+      "bytes": 6448,
+      "sha256": "60298a3cbc0d987a2c5fade5463b142b3e50475fa9f9ec2b81fb82fd885bd169"
+    },
+    {
+      "path": "windows/smoke.mjs",
+      "bytes": 6034,
+      "sha256": "c77af2f36fd23d452ccb3a463ad3a99613b6baf23c825193c006ad4f27b9bccc"
     }
   ]
 }
