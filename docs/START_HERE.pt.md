@@ -13,7 +13,7 @@
   padrão usa loopback e dispensa domínio, portas públicas e registo. A
   localização do nó por si só não cifra ficheiros.
 
-No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.12/CellCloud-Node-Testnet-0.2.0-testnet.12-Windows-x64.exe).
+No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.13/CellCloud-Node-Testnet-0.2.0-testnet.13-Windows-x64.exe).
 
 Para atualizar, fecha o programa e instala a nova versão sobre a anterior. Volta a usar a mesma pasta de dados e a mesma configuração para preservar a identidade pública. Com a opção **Aceitar uploads da comunidade por carteira**, o nó atualizado pode receber células de deploys repartidos. A CellCloud coordena esses envios quando encontra pelo menos dois nós compatíveis.
 Inclui Node.js e Caddy. Se preferires não usar o instalador, o percurso
@@ -234,7 +234,7 @@ distribui as células durante o deploy.
 <details>
 <summary>Ativar e registar no programa Windows</summary>
 
-1. Para o nó e seleciona **Público da comunidade**. Ativa **k@sMail** e usa
+1. Para o nó e seleciona **Público da comunidade**. Marca **Aceitar k@sMail** e usa
    a porta local predefinida 8081 se estiver livre. Os ficheiros usam 8080
    por defeito.
 2. Usa **Iniciar → Verificar k@sMail**. O programa configura a rota

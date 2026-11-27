@@ -43,7 +43,6 @@ sealed class NodeWindow : Form {
     readonly NumericUpDown mailPort = new NumericUpDown { Minimum = 1024, Maximum = 65535, Value = 8081 };
     readonly CheckBox uploads = new CheckBox { AutoSize = true }, startup = new CheckBox { AutoSize = true };
     readonly CheckBox mailEnabled = new CheckBox { AutoSize = true };
-    readonly CheckBox mailCloudflare = new CheckBox { AutoSize = true, Checked = true };
     readonly Button start = new Button(), stop = new Button(), check = new Button(), register = new Button();
     readonly Button checkMail = new Button(), registerMail = new Button();
     readonly FlowLayoutPanel mailActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty };
@@ -116,10 +115,8 @@ sealed class NodeWindow : Form {
         uploads.Text = L("Aceitar uploads da comunidade por carteira", "Accept wallet-authorized community uploads");
         startup.Text = L("Iniciar ao entrar no Windows", "Start when I sign into Windows");
         Full(layout, uploads);
-        mailEnabled.Text = L("Ativar nó de correio k@sMail (opcional)", "Enable k@sMail node (optional)");
+        mailEnabled.Text = L("Aceitar k@sMail (opcional)", "Accept k@sMail (optional)");
         Full(layout, mailEnabled);
-        mailCloudflare.Text = L("Aceitar o k@sMail no Cloudflare", "Accept k@sMail on Cloudflare");
-        Full(layout, mailCloudflare);
         Row(layout, L("Porta local do correio", "Local mail port"), mailPort);
         Full(layout, startup);
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 6, 0, 0) };
@@ -359,8 +356,8 @@ sealed class NodeWindow : Form {
                 "1. Escolhe Privado neste computador. Define a pasta e o espaço.\r\n\r\n2. Usa Iniciar → Verificar ligação. Na app local, liga a carteira Testnet-10 e abre Nós → O meu nó privado. Confirma o endereço e o Node ID.\r\n\r\n3. Para autorizar uploads, abre Pasta do nó e procura private-testnet/storage/testnet-10/upload-token.private.json. Usa o token apenas na app local. Este modo funciona neste computador sem registo público.\r\n\r\nPara correr os dois modos em simultâneo, usa o programa para o nó público e o terminal para o privado. Usa pastas, Node IDs e portas diferentes.",
                 "1. Choose Private on this computer. Set the folder and storage limit.\r\n\r\n2. Use Start → Check connection. In the local app, connect your Testnet-10 wallet and open Nodes → My private node. Verify the address and Node ID.\r\n\r\n3. To authorize uploads, open Node folder and find private-testnet/storage/testnet-10/upload-token.private.json. Use the token only in the local app. This mode works on this computer without public registration.\r\n\r\nTo run both modes at once, use the program for the public node and a terminal for the private node. Use separate folders, Node IDs and ports."), Guide);
             GuidePage(tabs, "k@sMail", L(
-                "1. Com o nó parado, ativa k@sMail e escolhe se aceitas o endereço do Cloudflare. A porta local do correio tem de ser diferente da dos ficheiros.\r\n\r\n2. Usa Iniciar → Verificar k@sMail. Para o Cloudflare, o programa verifica uma identidade de correio separada. As caixas existentes na Vercel continuam a usar a identidade anterior.\r\n\r\n3. Usa Abrir registo de correio e submete apenas o perfil público no GitHub. Aguarda a aprovação da identidade no piloto.",
-                "1. With the node stopped, enable k@sMail and choose whether to accept the Cloudflare address. The local mail port must differ from the file port.\r\n\r\n2. Select Start → Check k@sMail. For Cloudflare, the program checks a separate mail identity. Existing Vercel mailboxes keep using the previous identity.\r\n\r\n3. Choose Open mail registration and submit only the public profile on GitHub. Wait for identity approval in the pilot."), Guide);
+                "1. Com o nó parado, marca Aceitar k@sMail. A porta local do correio tem de ser diferente da dos ficheiros.\r\n\r\n2. Usa Iniciar → Verificar k@sMail. O programa verifica automaticamente a ligação ao endereço atual da app.\r\n\r\n3. Usa Abrir registo de correio e submete apenas o perfil público no GitHub. Aguarda a aprovação da identidade no piloto.",
+                "1. With the node stopped, select Accept k@sMail. The local mail port must differ from the file port.\r\n\r\n2. Select Start → Check k@sMail. The program checks the connection to the current app address automatically.\r\n\r\n3. Choose Open mail registration and submit only the public profile on GitHub. Wait for identity approval in the pilot."), Guide);
             dialog.ShowDialog(this);
         }
     }
@@ -384,7 +381,6 @@ sealed class NodeWindow : Form {
             folder.Text = (string)values["folder"]; quota.Value = Convert.ToDecimal(values["quotaGiB"]);
             port.Value = Convert.ToDecimal(values["port"]); uploads.Checked = (bool)values["uploads"];
             if (values.ContainsKey("mailEnabled")) mailEnabled.Checked = (bool)values["mailEnabled"];
-            mailCloudflare.Checked = values.ContainsKey("mailCloudflare") && (bool)values["mailCloudflare"];
             if (values.ContainsKey("mailPort")) mailPort.Value = Convert.ToDecimal(values["mailPort"]);
         } catch { status.Text = L("Confirma os dados da configuração.", "Review your configuration."); }
     }
@@ -396,8 +392,6 @@ sealed class NodeWindow : Form {
         start.Enabled = idle; stop.Enabled = check.Enabled = !working && node != null;
         register.Enabled = !working && node != null && publicProfile != null;
         mailEnabled.Enabled = idle && mode.SelectedIndex == 1;
-        mailCloudflare.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
-        mailCloudflare.Enabled = idle;
         mailPort.Enabled = mailEnabled.Enabled && mailEnabled.Checked;
         mailActions.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
         checkMail.Enabled = !working && node != null;
@@ -454,8 +448,7 @@ sealed class NodeWindow : Form {
         return new Dictionary<string, object> {
             {"isPublic", mode.SelectedIndex == 1}, {"name", name.Text.Trim()}, {"hostname", domain.Text.Trim().ToLowerInvariant()},
             {"folder", folder.Text.Trim()}, {"quotaGiB", (int)quota.Value}, {"port", (int)port.Value}, {"uploads", uploads.Checked},
-            {"mailEnabled", mode.SelectedIndex == 1 && mailEnabled.Checked}, {"mailPort", (int)mailPort.Value},
-            {"mailCloudflare", mailCloudflare.Checked}
+            {"mailEnabled", mode.SelectedIndex == 1 && mailEnabled.Checked}, {"mailPort", (int)mailPort.Value}
         };
     }
 

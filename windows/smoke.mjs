@@ -97,29 +97,27 @@ await assert.rejects(request('prepare',{...mailSetup,isPublic:false}),/MAIL_REQU
 const mailReady=await request('prepare',mailSetup);
 assert.match(await fs.readFile(path.join(mailReady.state,'Caddyfile'),'utf8'),/handle \/kasmail\/v1\/\*/);
 const {mailSettings,checkMail}=await import(pathToFileURL(path.join(payload,'app','windows','mail.mjs')));
-const configMail=mailSettings(mailSetup,mailReady.state);
-const cloudflareSetup={...mailSetup,mailCloudflare:true};
-const cloudflareMail=mailSettings(cloudflareSetup,mailReady.state);
-let mailIdentity;
+const cloudflareMail=mailSettings(mailSetup,mailReady.state);
+const legacyMail=cloudflareMail.legacy;
+assert.equal(legacyMail.data,path.join(mailReady.state,'mail-storage'));
+let mailIdentity,cloudflareIdentity;
 const publicIdentity=await cycle({setup:mailSetup,verify:async(profile)=>{
  assert.equal(profile.url,'wss://node.example.com/peer');
- const signedMail=await checkMail(configMail,mailReady.state,{local:true});
+ const signedMail=await checkMail(legacyMail,mailReady.state,{local:true});
  assert.equal(signedMail.network,'testnet-10');
  assert.equal(signedMail.url,'https://node.example.com/kasmail/v1/');
  assert.notEqual(signedMail.id,profile.nodeId);
  mailIdentity=signedMail.id;
+ const signedCloudflare=await checkMail(cloudflareMail,mailReady.state,{local:true});
+ assert.notEqual(signedCloudflare.id,mailIdentity);
+ cloudflareIdentity=signedCloudflare.id;
  const denied=await fetch(`http://127.0.0.1:${mailPort}/kasmail/v1/hello?nonce=invalid`,{headers:{Origin:'https://unapproved.example.com',Host:'node.example.com'}});
  assert.equal(denied.status,403);
 }});
-let cloudflareIdentity;
-const verifyBothOrigins=async()=>{
- const signedMail=await checkMail(configMail,mailReady.state,{local:true});
+assert.equal(await cycle({setup:mailSetup,verify:async()=>{
+ const signedMail=await checkMail(legacyMail,mailReady.state,{local:true});
  assert.equal(signedMail.id,mailIdentity);
  const signedCloudflare=await checkMail(cloudflareMail,mailReady.state,{local:true});
- assert.notEqual(signedCloudflare.id,mailIdentity);
- if(cloudflareIdentity)assert.equal(signedCloudflare.id,cloudflareIdentity);
- cloudflareIdentity=signedCloudflare.id;
-};
-assert.equal(await cycle({setup:cloudflareSetup,verify:verifyBothOrigins}),publicIdentity);
-assert.equal(await cycle({setup:cloudflareSetup,verify:verifyBothOrigins}),publicIdentity);
+ assert.equal(signedCloudflare.id,cloudflareIdentity);
+}}),publicIdentity);
 console.log('Windows payload passed: node restarts, persisted replication settings and separate k@sMail identities for both origins.');

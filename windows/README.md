@@ -59,16 +59,15 @@ the kit checksum before extracting it.
 
 ## Optional k@sMail
 
-With a public node stopped, enable **k@sMail** and choose a different
+With a public node stopped, select **Accept k@sMail** and choose a different
 local port from the file node. Start and select **Check k@sMail**, then
 **Open mail registration**. The program configures `/kasmail/v1/` on the
 existing HTTPS hostname and creates a separate mail identity and data
-folder. Enable **Accept k@sMail on Cloudflare** to serve
-`https://kasmail.ramalholab.workers.dev` on the same public route and local
-mail port. Cloudflare uses a separate identity and storage folder. Existing
-Vercel mailboxes still use their original identity and storage. With Cloudflare
-enabled, the check and registration buttons refer to the Cloudflare profile.
-The pilot still needs to approve that profile for delivery.
+folder. The option serves the current k@sMail app on Cloudflare and keeps
+existing Vercel mailboxes on their original identity and storage. Both use
+the same public route and local mail port. The check and registration
+buttons refer to the current k@sMail app. The pilot still needs to approve
+that profile for delivery.
 
 The test installer is unsigned. Keep local data, private configuration and
 keys out of the release.

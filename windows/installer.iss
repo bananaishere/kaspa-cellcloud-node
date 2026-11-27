@@ -1,7 +1,7 @@
 [Setup]
 AppId=CellCloudNode.Windows.Testnet
 AppName=CellCloud Node (Testnet-10)
-AppVersion=0.2.0-testnet.12
+AppVersion=0.2.0-testnet.13
 AppPublisher=Kaspa CellCloud
 DefaultDirName={localappdata}\Programs\CellCloud Node
 PrivilegesRequired=lowest
