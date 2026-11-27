@@ -29,7 +29,7 @@ const url=isPublic?`wss://${hostname}/peer`:`ws://127.0.0.1:${port}/peer`;
 const state=path.resolve(folder,isPublic?'public-testnet':'private-testnet');
 const mail=['prepare','start','diagnose','check-mail'].includes(command)?mailSettings(options,state):null;
 const configFile=path.join(state,'node.json');
-const local={...operatorTemplate(),port,data:path.join(state,'storage'),logFile:path.join(state,'logs','node.log'),
+const local={...operatorTemplate(),port,quotaBytes:quotaGiB*1024**3,data:path.join(state,'storage'),logFile:path.join(state,'logs','node.log'),
  publicUrl:url,reverseProxyTls:isPublic,publicUploads:{enabled:isPublic&&uploads===true}};
 if(isPublic){local.origins=[publicOrigin];local.viewerOrigins=[];}
 const config=validateOperatorConfig(local,{directory:state});
@@ -67,7 +67,7 @@ if(command==='prepare'){
   pinned.expectedNodeId=profile.nodeId;
   await writeSettings(pinned);
  }
- console.log(JSON.stringify({profile,publicReachable,replication:localReport.replication}));
+ console.log(JSON.stringify({profile,publicReachable,quotaBytes:localReport.quotaBytes,replication:localReport.replication}));
 }else if(command==='check-mail'){
  if(!mail)throw Error('MAIL_SERVICE_DISABLED');
  let profile,publicReachable=false;

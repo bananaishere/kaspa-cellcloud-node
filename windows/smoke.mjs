@@ -49,6 +49,7 @@ async function cycle({pinned=false,setup=options,verify}={}){
   const result=await request('diagnose',setup);
   assert.equal(result.profile.networkId,'testnet-10');
   assert.match(result.profile.nodeId,/^[a-f0-9]{64}$/);
+  assert.equal(result.quotaBytes,setup.quotaGiB*1024**3);
   if(!setup.isPublic)assert.equal(result.publicReachable,false);
   if(pinned)assert.deepEqual(result.replication?.peers,[]);
   if(verify)await verify(result.profile);
@@ -66,15 +67,17 @@ assert.deepEqual(config.peers,[]);
 assert.equal(config.publicUploads.enabled,false);
 assert.equal(config.host,'127.0.0.1');
 const identity=await cycle();
-await request('prepare');
-assert.equal(await cycle({pinned:true}),identity);
+const resized={...options,quotaGiB:3};
+await request('prepare',resized);
+assert.equal(await cycle({pinned:true,setup:resized}),identity);
 
-const publicSetup={...options,isPublic:true,hostname:'node.example.com',name:'Windows fixture'};
+const publicSetup={...resized,isPublic:true,hostname:'node.example.com',name:'Windows fixture'};
 const result=await request('prepare',publicSetup);
 const publicConfig=JSON.parse(await fs.readFile(result.configFile,'utf8'));
 assert.equal(publicConfig.expectedNodeId,null);
 assert.deepEqual(publicConfig.peers,[]);
 assert.equal(publicConfig.publicUrl,'wss://node.example.com/peer');
+assert.equal(publicConfig.quotaBytes,3*1024**3);
 assert.match(await fs.readFile(path.join(result.state,'Caddyfile'),'utf8'),/reverse_proxy 127\.0\.0\.1:/);
 const peers=[{url:'wss://other.example.com/peer',nodeId:'ab'.repeat(32)}];
 const rpcUrl='wss://rpc.example.com/testnet-10/wrpc/borsh';
