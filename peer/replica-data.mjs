@@ -14,13 +14,26 @@ export class ReplicaData{
  async receipt({manifestId,nonce}){
   if(!isDigest(nonce))throw Error('INVALID_STORAGE_RECEIPT');
   const s=this.store,job=s.job(manifestId);s.publication(manifestId);
+  if(job.placement)throw Error('REPLICA_PARTIAL_STORAGE');
   let checkedAt=this.diskChecks.get(manifestId)||0;
   if(s.now()-checkedAt>=30000){await s.complete(job);checkedAt=s.now();this.diskChecks.set(manifestId,checkedAt);}
   return signStorageReceipt(s,{manifestId,transactionId:job.transactionId,merkleRoot:s.metadata(job).merkleRoot,checkedAt,nonce});
  }
- inventory(){const roots=new Set([...this.store.heads.chains.keys(),...this.store.heads.conflicts.keys()]);return {version:1,networkId:this.store.network,publications:[...this.store.jobs.values()].filter(j=>j.state==='CONFIRMED').map(j=>({id:j.id,transactionId:j.transactionId})),heads:[...roots].map(root=>{const records=this.store.heads.chains.get(root)||this.store.heads.conflicts.get(root).left;return {root,revision:records.length,proof:verifyHeadChain(records).proof,conflict:this.store.heads.conflicts.has(root)};})};}
+ inventory(){
+  const store=this.store;
+  const roots=new Set([...store.heads.chains.keys(),...store.heads.conflicts.keys()]);
+  const publications=[...store.jobs.values()].filter(job=>job.state==='CONFIRMED'&&!job.placement).map(job=>({id:job.id,transactionId:job.transactionId}));
+  const heads=[];
+  for(const root of roots){
+   const records=store.heads.chains.get(root)||store.heads.conflicts.get(root).left;
+   if(records.some(record=>store.jobs.get(record.body.manifestId)?.placement))continue;
+   heads.push({root,revision:records.length,proof:verifyHeadChain(records).proof,conflict:store.heads.conflicts.has(root)});
+  }
+  return {version:1,networkId:store.network,publications,heads};
+ }
  record(id){
   const s=this.store,j=s.job(id);s.publication(id);
+  if(j.placement)throw Error('REPLICA_PARTIAL_STORAGE');
   return {version:1,networkId:s.network,id:j.id,name:j.name,address:j.address,manifest:j.manifest,plan:j.plan,signedJson:j.signedJson,transactionId:j.transactionId,anchor:j.anchor,...(j.update?{update:j.update,updateChain:s.heads.chain(j.update.rootManifestId).slice(0,j.update.revision-1)}:{})};
  }
  validate(record){
@@ -49,6 +62,7 @@ export class ReplicaData{
  }
  async receive(record,read){
   const s=this.store,{normalized,meta}=this.validate(record),existing=s.jobs.get(record.id);
+  if(existing?.placement)throw Error('REPLICA_PARTIAL_STORAGE');
   if(existing&&(existing.name!==record.name||existing.address!==record.address||canonicalJson(existing.update||null)!==canonicalJson(normalized.update||null)||existing.transactionId&&existing.transactionId!==record.transactionId))throw Error('REPLICA_RECEIPT_CONFLICT');
   const known=existing?.state==='CONFIRMED'&&existing.lastConfirmedAt&&existing.transactionId===record.transactionId;
   // Repair of an already locally verified receipt preserves its observed
@@ -76,6 +90,7 @@ export class ReplicaData{
    }
    await s.serialized(async()=>{
     const current=s.jobs.get(record.id);
+    if(current?.placement)throw Error('REPLICA_PARTIAL_STORAGE');
     if(current&&(current.name!==record.name||current.address!==record.address||canonicalJson(current.update||null)!==canonicalJson(normalized.update||null)))throw Error('REPLICA_RECEIPT_CONFLICT');
     if(current?.transactionId&&current.transactionId!==record.transactionId)throw Error('REPLICA_RECEIPT_CONFLICT');
     if(current?.state==='CONFIRMED')return;

@@ -13,7 +13,9 @@
   padrão usa loopback e dispensa domínio, portas públicas e registo. A
   localização do nó por si só não cifra ficheiros.
 
-No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.9/CellCloud-Node-Testnet-0.2.0-testnet.9-Windows-x64.exe).
+No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.10/CellCloud-Node-Testnet-0.2.0-testnet.10-Windows-x64.exe).
+
+Para atualizar, fecha o programa e instala a nova versão sobre a anterior. Volta a usar a mesma pasta de dados e a mesma configuração para preservar a identidade pública. Com a opção **Aceitar uploads da comunidade por carteira**, o nó atualizado pode receber células de deploys repartidos. A CellCloud coordena esses envios quando encontra pelo menos dois nós compatíveis.
 Inclui Node.js e Caddy. Se preferires não usar o instalador, o percurso
 **Instalar por terminal** abaixo cobre Windows, Linux e macOS.
 

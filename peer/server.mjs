@@ -15,6 +15,7 @@ const publicErrors=new Set(['UPLOAD_AUTHORIZATION_REQUIRED','PEER_NETWORK_MISMAT
 for(const code of ['INVALID_HEAD_FIELDS','INVALID_HEAD_PROTOCOL','INVALID_HEAD_DIGEST','INVALID_HEAD_NAME','INVALID_HEAD_TIME','HEAD_HISTORY_LIMIT','INVALID_HEAD_SEQUENCE','INVALID_HEAD_RECORD','HEAD_SIGNATURE_INVALID','HEAD_GENESIS_REQUIRED','HEAD_SEQUENCE_CONFLICT','HEAD_ROOT_MISMATCH','ORIGINAL_AUTHOR_REQUIRED','VERSION_CONSISTENCY_ERROR','HEAD_NOT_FOUND','HEAD_CONFIRMED_PAYMENT_REQUIRED','UPDATE_PAYMENT_REQUIRED','ORIGINAL_PAYMENT_REQUIRED','HEAD_ALREADY_EXISTS','HEAD_REVIEW_EXPIRED','UPDATE_ALREADY_STAGED'])publicErrors.add(code);
 for(const code of ['REPLICA_AUTH_REQUIRED','REPLICA_READ_ONLY','INVALID_REPLICA_RECORD','REPLICA_PAYMENT_UNCONFIRMED','REPLICA_RECEIPT_CONFLICT','INVALID_HEAD_CONFLICT_PROOF'])publicErrors.add(code);
 publicErrors.add('INVALID_STORAGE_RECEIPT');
+for(const code of ['INVALID_CELL_PLACEMENT','CELL_PLACEMENT_UNAVAILABLE','CELL_PLACEMENT_CHANGED','CELL_ASSIGNED_TO_ANOTHER_NODE','PLACEMENT_RECEIPTS_REQUIRED','INVALID_PLACEMENT_RECEIPT','PLACEMENT_COORDINATOR_REQUIRED','INVALID_PLACEMENT_HEAD','REPLICA_PARTIAL_STORAGE'])publicErrors.add(code);
 publicErrors.add('ROLLBACK_TARGET_NOT_IN_HISTORY');
 publicErrors.add('RECOVERY_VERIFICATION_ONLY');
 for(const code of ['PUBLIC_UPLOADS_DISABLED','PUBLIC_UPLOADS_TESTNET_ONLY','UPLOAD_SIGNATURE_INVALID','INVALID_UPLOAD_CHALLENGE','UPLOAD_CHALLENGE_CONTEXT_CHANGED','UPLOAD_OWNER_REQUIRED','UPLOAD_SESSION_EXPIRED','UPLOAD_AUTH_RATE_LIMIT','PUBLIC_UPLOAD_SIZE_LIMIT','PUBLIC_UPLOAD_PENDING_LIMIT','PUBLIC_UPLOAD_PENDING_BYTES_LIMIT'])publicErrors.add(code);
@@ -101,13 +102,14 @@ export async function startPeerServer({store,host='127.0.0.1',port=0,origins=[],
        }
        if(request.operation==='open')result=await store.open(args,uploadSession);
        else if(request.operation==='put'){if(!isBinary)throw Error('BINARY_CELL_REQUIRED');result=await store.put(args,bytes);}
+       else if(request.operation==='placementReceipt')result=await store.placementReceipt(args.id);
        else if(request.operation==='review')result=await store.review(args);
        else if(request.operation==='authorize')result=await store.authorize(args);
        else if(request.operation==='confirm')result=await store.confirm(args.manifestId);
        else if(request.operation==='resume')result=await store.resume(args.manifestId);
        else if(request.operation==='beginSend')result=await store.beginSend(args.manifestId);
        else if(request.operation==='headChallenge')result=store.heads.challenge(args);
-       else if(request.operation==='headAuthorize')result=await store.heads.authorize(args.record);
+       else if(request.operation==='headAuthorize')result=await store.heads.authorize(args.record,args.placementWitness);
        else throw Error('UNKNOWN_PEER_OPERATION');
       }
      }

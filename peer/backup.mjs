@@ -6,7 +6,7 @@ import {hexToBytes} from '@noble/hashes/utils.js';
 import {createBackup,verifyBackup,restoreBackup} from '../lab/lib/backup.mjs';
 import {PeerStore} from './store.mjs';
 import {hash,canonicalJson,isDigest} from '../protocol/integrity.js';
-import {CELL} from '../protocol/codec.js';
+import {CELL,K,N} from '../protocol/codec.js';
 import {reconstructStripe} from '../protocol/manifest.js';
 import {verifyHeadChain} from '../protocol/heads.js';
 import {DirectKaspaClient} from '../protocol/kaspa-client.js';
@@ -37,7 +37,7 @@ export async function inspectPeerRestore(directory){
  const store=await new PeerStore({directory:root,network,quotaBytes:8*1024**3,rpc}).init();
  try{
   if(store.nodeId!==expectedNodeId||!store.recoveryReadOnly)throw Error('RECOVERY_GUARD_REQUIRED');
-  let cells=0,files=0,receipts=0,pending=0,staged=0;const histories=[];
+  let cells=0,files=0,receipts=0,pending=0,staged=0,distributed=false;const histories=[];
   for(const digest of await fs.readdir(store.base('cells'))){const bytes=await fs.readFile(store.base('cells',digest));if(bytes.length!==CELL||hash(bytes)!==digest)throw Error('STORED_CELL_CORRUPTED');cells++;}
   for(const job of store.jobs.values()){
    if(job.state==='STAGED'){staged++;continue;}
@@ -50,14 +50,17 @@ export async function inspectPeerRestore(directory){
    if(job.update){const chain=store.heads.chain(job.update.rootManifestId).slice(0,job.update.revision-1),prior=verifyHeadChain(chain,{author:job.manifest.author_pubkey,rootManifestId:job.update.rootManifestId});if(prior.revision+1!==job.update.revision||prior.manifestId!==job.update.previousManifestId||prior.name!==job.name)throw Error('UPDATE_CONTEXT_CHANGED');}
    receipts++;if(job.state==='SIGNED')pending++;
    await store.complete(job);
+   if(job.placement)distributed=true;
+   const indexes=Array.from({length:N},(_,index)=>index).filter(index=>job.placement?
+    job.placement[index%job.placement.length]===store.nodeId:index>=N-K).slice(0,K);
    for(const entry of meta.entries){
     const digest=createHash('sha256');let length=0;
-    for(const stripe of entry.stripes){const shards=[];for(let index=20;index<30;index++)shards.push({index,data:await fs.readFile(store.base('cells',stripe.digests[index]))});const bytes=reconstructStripe(stripe,shards);digest.update(bytes);length+=bytes.length;}
+    for(const stripe of entry.stripes){const shards=[];for(const index of indexes)shards.push({index,data:await fs.readFile(store.base('cells',stripe.digests[index]))});const bytes=reconstructStripe(stripe,shards);digest.update(bytes);length+=bytes.length;}
     if(length!==entry.length||digest.digest('hex')!==entry.sha256)throw Error('RESTORED_FILE_MISMATCH');files++;
    }
   }
   for(const [root,records] of store.heads.chains){const head=verifyHeadChain(records);histories.push({root,revision:head.revision,manifestId:head.manifestId,author:head.author_pubkey,operation:head.operation,conflict:store.heads.conflicts.has(root)});}
-  return {nodeId:store.nodeId,network,cells,files,receipts,pending,staged,histories,conflicts:store.heads.conflicts.size,identityPreserved:true,reconstruction:'10 parity positions (20–29)',paymentSubmissionEnabled:false,blockchainConnections:0,currentNetworkConfirmationChecked:false};
+  return {nodeId:store.nodeId,network,cells,files,receipts,pending,staged,histories,conflicts:store.heads.conflicts.size,identityPreserved:true,reconstruction:distributed?'10 verified local positions':'10 parity positions (20–29)',paymentSubmissionEnabled:false,blockchainConnections:0,currentNetworkConfirmationChecked:false};
  }finally{store.close();await rpc.close();}
 }
 export async function restorePeerBackup(source,destination){

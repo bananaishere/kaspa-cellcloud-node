@@ -1,8 +1,11 @@
 import fs from 'node:fs/promises';
 import {randomBytes} from 'node:crypto';
+import {ed25519} from '@noble/curves/ed25519.js';
+import {bytesToHex} from '@noble/hashes/utils.js';
 import {appIdFor,headMessage,proofHash,verifyHeadChain,headRelation,verifyHeadFork} from '../protocol/heads.js';
 import {canonicalJson,isDigest} from '../protocol/integrity.js';
 import {updateIntent} from '../lab/lib/payment-intent.mjs';
+import {placementHeadMessage,verifyPlacementHead} from '../protocol/cell-placement.js';
 
 export class PeerHeads{
  constructor(store,atomic){this.store=store;this.atomic=atomic;this.chains=new Map();this.conflicts=new Map();}
@@ -94,18 +97,28 @@ export class PeerHeads{
   const now=this.store.now(),body={protocol:'cellcloud-peer-head',version:1,networkId:this.store.network,operation:rollback?'ROLLBACK':prior?'UPDATE':'CREATE',appId:prior?.appId||appIdFor(manifestId),name:prior?.name||job.name,rootManifestId:prior?.rootManifestId||manifestId,originalMerkleRoot:prior?.originalMerkleRoot||this.store.metadata(job).merkleRoot,previousManifestId:prior?.manifestId||null,previousProof:prior?.proof||null,manifestId,merkleRoot:this.store.metadata(job).merkleRoot,author_pubkey:job.manifest.author_pubkey,revision:prior?prior.revision+1:1,transactionId:job.transactionId,issuedAt:now,expiresAt:now+120000,nonce:randomBytes(32).toString('hex')};
   this.bind(body);if(prior&&!rollback)this.updateContext(job.update,body.author_pubkey);return {body,message:headMessage(body)};
  }
- authorize(record){return this.store.serialized(async()=>{
+ authorize(record,witness){return this.store.serialized(async()=>{
   const b=record?.body;if(!b||!isDigest(b.rootManifestId))throw Error('INVALID_HEAD_RECORD');
   const existing=this.chains.get(b.rootManifestId)||[];
   if(existing.some(item=>proofHash(item)===proofHash(record)))return this.resolve(b.rootManifestId);
   if(existing.length===0&&this.chains.size>=128)throw Error('HEAD_HISTORY_LIMIT');
   const next=[...existing,record],head=verifyHeadChain(next,{rootManifestId:b.rootManifestId});
-  if(b.issuedAt>this.store.now()+1000||b.expiresAt<=this.store.now())throw Error('HEAD_REVIEW_EXPIRED');
-  this.bind(b);if(b.operation==='UPDATE')this.updateContext(this.store.job(b.manifestId).update,b.author_pubkey);
+  const job=this.bind(b),coordinator=job.placement?.[0];
+  if(coordinator&&coordinator!==this.store.nodeId)verifyPlacementHead(witness,{networkId:this.store.network,proof:head.proof,coordinator});
+  else if(b.issuedAt>this.store.now()+1000||b.expiresAt<=this.store.now())throw Error('HEAD_REVIEW_EXPIRED');
+  if(b.operation==='UPDATE')this.updateContext(job.update,b.author_pubkey);
   if(b.operation==='ROLLBACK'){this.rollbackTarget(b.rootManifestId,b.manifestId);await this.store.complete(this.store.job(b.manifestId));}
   const file=this.store.base('heads',b.rootManifestId+'.json'),serialized=JSON.stringify(next),priorBytes=existing.length?Buffer.byteLength(JSON.stringify(existing)):0;
   if(this.store.usedBytes+Buffer.byteLength(serialized)-priorBytes>this.store.quotaBytes)throw Error('STORAGE_QUOTA_EXCEEDED');
   await this.atomic(file,serialized);this.store.usedBytes+=Buffer.byteLength(serialized)-priorBytes;this.chains.set(head.rootManifestId,next);return this.resolve(head.rootManifestId);
  });}
- resolve(root){if(this.conflicts.has(root))return {conflict:this.conflicts.get(root)};const records=this.chain(root),head=this.current(root);this.bind(head);return {records,publication:this.store.publication(head.manifestId)};}
+ resolve(root){
+  if(this.conflicts.has(root))return {conflict:this.conflicts.get(root)};
+  const records=this.chain(root),head=this.current(root),job=this.bind(head);
+  const witness=job.placement?.[0]===this.store.nodeId?{
+   publicKey:this.store.publicKey,
+   signature:bytesToHex(ed25519.sign(placementHeadMessage(this.store.network,head.proof),this.store.secret))
+  }:null;
+  return {records,publication:this.store.publication(head.manifestId),...(witness?{placementWitness:witness}:{})};
+ }
 }

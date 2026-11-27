@@ -11,6 +11,7 @@ import {accountScript} from '../src/wallet-verifier.js';
 import {PeerHeads} from './heads.mjs';
 import {updateIntent} from '../lab/lib/payment-intent.mjs';
 import {publicUploadPolicy} from '../protocol/upload-admission.js';
+import {assignedCellDigests,placementNodes,signPlacementReceipt,verifyPlacementReceipts} from '../protocol/cell-placement.js';
 
 export async function atomic(file,value){
  const temp=file+'.'+randomUUID()+'.tmp',handle=await fs.open(temp,'wx',0o600);
@@ -20,10 +21,10 @@ export async function atomic(file,value){
  if(process.platform!=='win32'){const directory=await fs.open(path.dirname(file),'r');try{await directory.sync();}finally{await directory.close();}}
 }
 export class PeerStore{
- constructor({directory,network='testnet-10',quotaBytes=1024**3,rpc,now=()=>Date.now(),publicUploads}){
+ constructor({directory,network='testnet-10',quotaBytes=1024**3,rpc,now=()=>Date.now(),publicUploads,distributedUploads=false}){
   if(!Number.isSafeInteger(quotaBytes)||quotaBytes<CELL*N)throw Error('INVALID_STORAGE_QUOTA');
   Object.assign(this,{directory:path.resolve(directory),network:networkId(network),quotaBytes,rpc,now});this.jobs=new Map();this.manifests=new Map();this.usedBytes=0;this.queue=Promise.resolve();
-  this.replicaPeers=[];this.replicaReservedBytes=0;
+  this.replicaPeers=[];this.replicaReservedBytes=0;this.distributedUploads=distributedUploads===true;
   this.publicUploads=publicUploadPolicy(publicUploads);if(this.publicUploads.enabled&&this.network!=='testnet-10')throw Error('PUBLIC_UPLOADS_TESTNET_ONLY');
  }
  async init(){
@@ -56,7 +57,10 @@ export class PeerStore{
   // Recompute reservations after a crash; an acknowledged cell may have reached
   // disk before in-memory progress was updated. No manifest is rewritten per cell.
   const present=new Set((await fs.readdir(this.base('cells'))).filter(isDigest));
-  for(const job of this.jobs.values())if(job.state==='STAGED'){const {entries}=this.metadata(job),missing=new Set(entries.flatMap(f=>f.stripes.flatMap(s=>s.digests)).filter(d=>!present.has(d)));job.reservedBytes=missing.size*CELL;}
+  for(const job of this.jobs.values())if(job.state==='STAGED'){
+   const missing=[...this.cellDigests(job)].filter(digest=>!present.has(digest));
+   job.reservedBytes=missing.length*CELL;
+  }
   this.heads=new PeerHeads(this,atomic);await this.heads.init();
   if(this.usedBytes>this.quotaBytes)throw Error('STORAGE_QUOTA_EXCEEDED');return this;
  }
@@ -67,6 +71,7 @@ export class PeerStore{
   if(!isDigest(nonce))throw Error('INVALID_HELLO_NONCE');
   const body={protocol:PROTOCOL,networkId:this.network,nodeId:this.nodeId,publicKey:this.publicKey,nonce,cellBytes:CELL,data:K,total:N,quotaBytes:this.quotaBytes,usedBytes:this.usedBytes,paymentVerification:Boolean(this.rpc),writesEnabled:!this.recoveryReadOnly&&this.network==='testnet-10'&&Boolean(this.rpc),timestamp:this.now(),replicaChallenge:randomBytes(32).toString('hex'),replicas:this.replicaPeers};
   body.publicUploads=this.publicUploads;
+  if(this.distributedUploads&&body.writesEnabled&&this.publicUploads.enabled)body.cellPlacementVersion=1;
   return {body,signature:bytesToHex(ed25519.sign(utf8(canonicalJson(body)),this.secret))};
  }
  validateJob(job,id){
@@ -74,8 +79,18 @@ export class PeerStore{
   this.metadata(job);if(accountScript(job.address)!=='000020'+job.manifest.author_pubkey+'ac')throw Error('AUTHOR_WALLET_MISMATCH');
   if(job.update)updateIntent(job.update);
   if(job.state!=='STAGED'&&(!job.plan||!isDigest(job.transactionId)||!isDigest(job.anchor)||typeof job.signedJson!=='string'||!job.expected))throw Error('INVALID_STORED_RECEIPT');
+  if(job.placement){
+   const nodes=placementNodes(job.placement);
+   if(!nodes.includes(this.nodeId))throw Error('INVALID_CELL_PLACEMENT');
+   if(job.state!=='STAGED')verifyPlacementReceipts(job.placementReceipts,{networkId:this.network,manifestId:id,nodes,acceptedAt:job.signedAt});
+  }
  }
  metadata(job){let cached=this.manifests.get(job.id);if(cached?.manifest!==job.manifest){cached={manifest:job.manifest,...validateManifest(job.manifest,job.id)};this.manifests.set(job.id,cached);}return cached;}
+ cellDigests(job){
+  const {entries}=this.metadata(job);
+  return job.placement?assignedCellDigests(entries,job.placement,this.nodeId):
+   new Set(entries.flatMap(entry=>entry.stripes.flatMap(stripe=>stripe.digests)));
+ }
  async save(job){
   this.validateJob(job,job.id);const file=this.base('jobs',job.id+'.json'),serialized=JSON.stringify(job),size=Buffer.byteLength(serialized);if(size>20*1024**2)throw Error('JOB_SIZE_LIMIT');
   let prior=0;try{prior=(await fs.stat(file)).size;}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -83,7 +98,7 @@ export class PeerStore{
   await atomic(file,serialized);this.usedBytes+=size-prior;this.jobs.set(job.id,job);return job;
  }
  job(id){if(!isDigest(id)||!this.jobs.has(id))throw Error('PUBLICATION_NOT_FOUND');return this.jobs.get(id);}
- async open({manifestText,id,address,name,update},admission){
+ async open({manifestText,id,address,name,update,placement},admission){
   if(this.recoveryReadOnly)throw Error('RECOVERY_VERIFICATION_ONLY');
   requirePaymentNetwork(this.network);if(!this.rpc)throw Error('PEER_PAYMENT_RPC_REQUIRED');
   if(typeof manifestText!=='string'||Buffer.byteLength(manifestText)>16*1024**2||hash(manifestText)!==id)throw Error('MANIFEST_HASH_MISMATCH');
@@ -91,11 +106,15 @@ export class PeerStore{
   if(manifest.mode==='vault')throw Error('PEER_VAULT_NOT_SUPPORTED');
   if(accountScript(address)!=='000020'+manifest.author_pubkey+'ac')throw Error('AUTHOR_WALLET_MISMATCH');
   if(!address.startsWith('kaspatest:')||typeof name!=='string'||!name.trim()||name!==name.trim()||name.length>80)throw Error('INVALID_PUBLICATION_REQUEST');
+  const nodes=placement===undefined?null:placementNodes(placement);
+  if(nodes&&(!this.distributedUploads||!admission||!nodes.includes(this.nodeId)))throw Error('CELL_PLACEMENT_UNAVAILABLE');
+  const distribution=nodes?{placement:nodes}:{};
   return this.serialized(async()=>{
-   const existing=this.jobs.get(id);if(existing){if(existing.address!==address||existing.name!==name||canonicalJson(existing.update||null)!==canonicalJson(update?updateIntent(update):null))throw Error('PUBLICATION_METADATA_CHANGED');return this.summary(existing);}
+   const existing=this.jobs.get(id);if(existing){if(existing.address!==address||existing.name!==name||canonicalJson(existing.update||null)!==canonicalJson(update?updateIntent(update):null)||canonicalJson(existing.placement||null)!==canonicalJson(nodes))throw Error('PUBLICATION_METADATA_CHANGED');return this.summary(existing);}
    const context=update?this.heads.updateContext(update,manifest.author_pubkey):null;
    if(context){
     if(name!==this.heads.current(context.rootManifestId).name)throw Error('INVALID_HEAD_NAME');
+    if(canonicalJson(this.job(context.rootManifestId).placement||null)!==canonicalJson(nodes))throw Error('CELL_PLACEMENT_CHANGED');
     if([...this.jobs.values()].some(j=>j.update?.rootManifestId===context.rootManifestId&&j.update.revision===context.revision))throw Error('UPDATE_ALREADY_STAGED');
    }
    if(admission){
@@ -103,25 +122,24 @@ export class PeerStore{
     const pending=[...this.jobs.values()].filter(j=>j.publicAdmission&&j.state!=='CONFIRMED');
     if(summary.sizeBytes>p.maxFileBytes)throw Error('PUBLIC_UPLOAD_SIZE_LIMIT');
     if(pending.filter(j=>j.manifest.author_pubkey===admission.author_pubkey).length>=p.maxPendingPerWallet||pending.length>=p.maxPendingTotal)throw Error('PUBLIC_UPLOAD_PENDING_LIMIT');
-    const footprint=job=>new Set(this.metadata(job).entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))).size*CELL;
-    if(pending.reduce((total,j)=>total+footprint(j),0)+new Set(summary.entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))).size*CELL>p.maxPendingBytes)throw Error('PUBLIC_UPLOAD_PENDING_BYTES_LIMIT');
+    const footprint=job=>this.cellDigests(job).size*CELL;
+    if(pending.reduce((total,j)=>total+footprint(j),0)+footprint({manifest,id,...distribution})>p.maxPendingBytes)throw Error('PUBLIC_UPLOAD_PENDING_BYTES_LIMIT');
    }
    if(this.jobs.size>=128)throw Error('STAGED_PUBLICATION_LIMIT');
-   const digests=new Set(summary.entries.flatMap(f=>f.stripes.flatMap(s=>s.digests))),missing=[];
+   const digests=this.cellDigests({manifest,id,...distribution}),missing=[];
    for(const digest of digests){try{await fs.access(this.base('cells',digest));}catch{missing.push(digest);}}
-   // This initial private/operator node reserves enough room for all 30 positions.
-   // It does not advertise unimplemented partial-distribution guarantees.
    const reserved=[...this.jobs.values()].filter(j=>j.state==='STAGED').reduce((sum,j)=>sum+(j.reservedBytes||0),0);
    if(this.usedBytes+reserved+this.replicaReservedBytes+missing.length*CELL+Buffer.byteLength(manifestText)+512*1024>this.quotaBytes)throw Error('STORAGE_QUOTA_EXCEEDED');
-   const job={version:1,networkId:this.network,id,name,address,manifest,state:'STAGED',createdAt:this.now(),reservedBytes:missing.length*CELL,...(admission?{publicAdmission:true}:{}),...(context?{update:context}:{})};
+   const job={version:1,networkId:this.network,id,name,address,manifest,state:'STAGED',createdAt:this.now(),reservedBytes:missing.length*CELL,...distribution,...(admission?{publicAdmission:true}:{}),...(context?{update:context}:{})};
    await this.save(job);return this.summary(job);
   });
  }
- summary(job){const summary=this.metadata(job);return {id:job.id,name:job.name,state:job.state,sizeBytes:summary.sizeBytes,merkleRoot:summary.merkleRoot,transactionId:job.transactionId||null,confirmation:job.confirmation||null};}
+ summary(job){const summary=this.metadata(job);return {id:job.id,name:job.name,state:job.state,sizeBytes:summary.sizeBytes,merkleRoot:summary.merkleRoot,transactionId:job.transactionId||null,confirmation:job.confirmation||null,...(job.placement?{placement:job.placement}:{})};}
  stripe(job,fileIndex,stripeIndex){const {entries}=this.metadata(job);if(!Number.isSafeInteger(fileIndex)||!Number.isSafeInteger(stripeIndex)||!entries[fileIndex]?.stripes[stripeIndex])throw Error('INVALID_CELL_POSITION');return entries[fileIndex].stripes[stripeIndex];}
  async put({id,file,stripe,shard,proof},bytes){
   const job=this.job(id),expected=this.stripe(job,file,stripe);
   if(job.state!=='STAGED'||!Number.isInteger(shard)||shard<0||shard>=N||!(bytes instanceof Uint8Array)||bytes.length!==CELL||hash(bytes)!==expected.digests[shard]||proof?.index!==shard||proof?.count!==N||!verifyMerkleProof(expected.digests[shard],proof,expected.root))throw Error('INVALID_CELL_PROOF');
+  if(job.placement&&job.placement[shard%job.placement.length]!==this.nodeId)throw Error('CELL_ASSIGNED_TO_ANOTHER_NODE');
   const digest=expected.digests[shard];
   return this.serialized(async()=>{
    const current=this.job(id);if(current.state!=='STAGED')throw Error('PUBLICATION_NOT_STAGED');
@@ -132,31 +150,38 @@ export class PeerStore{
   });
  }
  async complete(job){
-  const {entries}=this.metadata(job);
-  for(const entry of entries)for(const stripe of entry.stripes)for(const digest of new Set(stripe.digests)){
+  for(const digest of this.cellDigests(job)){
    let bytes;try{bytes=await fs.readFile(this.base('cells',digest));}catch{throw Error('UPLOAD_INCOMPLETE');}if(bytes.length!==CELL||hash(bytes)!==digest)throw Error('STORED_CELL_CORRUPTED');
   }
  }
- async review({id,plan,expected}){
+ async placementReceipt(id){
+  const job=this.job(id);
+  if(!job.placement)throw Error('CELL_PLACEMENT_UNAVAILABLE');
+  await this.complete(job);
+  return signPlacementReceipt(this,id,job.placement);
+ }
+ async review({id,plan,expected,placementReceipts},acceptedAt=this.now()){
   if(this.recoveryReadOnly)throw Error('RECOVERY_VERIFICATION_ONLY');
   const job=this.job(id);if(job.state!=='STAGED')throw Error('EXISTING_PAYMENT_MUST_BE_RESUMED');
   await this.complete(job);
+  if(job.placement)verifyPlacementReceipts(placementReceipts,{networkId:this.network,manifestId:id,nodes:job.placement,acceptedAt});
   if(job.update){this.heads.updateContext(job.update,job.manifest.author_pubkey);this.checkUpdateReservation(job);}
   const independentlyExpected=this.rpc.expected({address:job.address,manifestId:id,sizeBytes:this.metadata(job).sizeBytes,update:job.update});
   if(canonicalJson(expected)!==canonicalJson(independentlyExpected))throw Error('PAYMENT_CONTEXT_CHANGED');
   await this.rpc.recheck(plan,independentlyExpected);return {reviewed:true,id};
  }
- async authorize({id,plan,expected,signedJson}){
+ async authorize({id,plan,expected,signedJson,placementReceipts}){
   requirePaymentNetwork(this.network);const job=this.job(id);
   if(job.state!=='STAGED'){if(hash(signedJson)===hash(job.signedJson))return this.summary(job);throw Error('EXISTING_PAYMENT_MUST_BE_RESUMED');}
-  await this.review({id,plan,expected});await this.rpc.validate(plan,expected,signedJson);
+  const signedAt=this.now();
+  await this.review({id,plan,expected,placementReceipts},signedAt);await this.rpc.validate(plan,expected,signedJson);
   const transaction=this.rpc.sdk.Transaction.deserializeFromSafeJSON(signedJson);let transactionId;try{transaction.finalize();transactionId=transaction.id;}finally{transaction.free();}
   if(transactionId!==plan.transactionId)throw Error('TRANSACTION_ID_CHANGED');
   const anchor=await this.rpc.checkpoint();
   return this.serialized(async()=>{
    const current=this.job(id);if(current.state!=='STAGED'){if(current.transactionId===transactionId)return this.summary(current);throw Error('EXISTING_PAYMENT_MUST_BE_RESUMED');}
    this.checkUpdateReservation(current);
-   const next={...current,state:'SIGNED',reservedBytes:0,plan,expected,signedJson,transactionId,anchor,signedAt:this.now()};await this.save(next);return this.summary(next);
+   const next={...current,state:'SIGNED',reservedBytes:0,plan,expected,signedJson,transactionId,anchor,signedAt,...(current.placement?{placementReceipts}:{})};await this.save(next);return this.summary(next);
   });
  }
  async confirm(id){
@@ -184,6 +209,7 @@ export class PeerStore{
  async beginSend(id){
   if(this.recoveryReadOnly)throw Error('RECOVERY_VERIFICATION_ONLY');
   const job=this.job(id);if(job.state!=='SIGNED'||job.submissionIntentAt)throw Error('SEND_ALREADY_REQUESTED_RESUME_CONFIRMATION');
+  if(job.placement&&job.placement[0]!==this.nodeId)throw Error('PLACEMENT_COORDINATOR_REQUIRED');
   await this.rpc.validate(job.plan,job.expected,job.signedJson);
   return this.serialized(async()=>{const current=this.job(id);if(current.state!=='SIGNED'||current.submissionIntentAt)throw Error('SEND_ALREADY_REQUESTED_RESUME_CONFIRMATION');await this.save({...current,submissionIntentAt:this.now()});return {granted:true,transactionId:current.transactionId};});
  }

@@ -94,3 +94,58 @@ test('peer quota and network/payment policies fail closed before writing content
  await assert.rejects(()=>mainnet.open({}),/MAINNET_PAYMENTS_NOT_ENABLED/);assert.equal(mainnet.jobs.size,0);
  const noRpc=await new PeerStore({directory:directory+'-offline',quotaBytes:CELL*N}).init();t.after(async()=>{noRpc.close();await fs.rm(directory+'-offline',{recursive:true,force:true});});assert.equal(noRpc.hello('ab'.repeat(32)).body.writesEnabled,false);await assert.rejects(()=>noRpc.open({}),/RPC_REQUIRED/);
 });
+
+test('two opt-in nodes divide an upload, verify one payment and keep its signed link readable after a node stops',async t=>{
+ const dir=await temp(t),{rpc,state}=rpcFixture();
+ const servers=[],peers=[];
+ t.after(async()=>{peers.forEach(peer=>peer.close());await Promise.all(servers.map(server=>server?.close()));await rpc.close();});
+ for(const index of [0,1]){
+  const store=await new PeerStore({directory:path.join(dir,String(index)),rpc,quotaBytes:64*1024**2,publicUploads:{enabled:true},distributedUploads:true}).init();
+  const server=await startPeerServer({store,origins:['http://127.0.0.1:5191']});servers.push(server);
+  const peer=clientFor(server.port);peers.push(peer);
+  const hello=await peer.connect();assert.equal(hello.cellPlacementVersion,1);peer.trust(hello.nodeId);
+  const grant=await peer.request('uploadChallenge',{address,author_pubkey:publicKey});
+  await peer.request('uploadAuth',{body:grant.body,signature:k.signMessage({message:grant.message,privateKey:key})});
+ }
+ const source=new Uint8Array(CELL*10).map((_,index)=>index%251),file=new File([source],'distributed.bin');
+ const publication=await analyseFiles([file],{author:publicKey}),id=publication.id;
+ const placement=peers.map(peer=>peer.hello.nodeId);
+ const opened={id,manifestText:JSON.stringify(publication.manifest),address,name:'Distributed file',placement};
+ const scope=await Promise.all(peers.map(peer=>peer.request('open',opened)));
+ assert.ok(scope.every(item=>item.state==='STAGED'));
+ await assert.rejects(()=>peers[0].request('placementReceipt',{id}),/UPLOAD_INCOMPLETE/);
+ const cells=await encodeFileStripe(file,publication.manifest.files[0],0);
+ const position=cell=>({id,file:0,stripe:0,shard:cell.shard,proof:cell.proof});
+ await assert.rejects(()=>peers[1].request('put',position(cells[0]),cells[0].bytes),/CELL_ASSIGNED_TO_ANOTHER_NODE/);
+ for(const cell of cells)await peers[cell.shard%2].request('put',position(cell),cell.bytes);
+ const placementReceipts=await Promise.all(peers.map(peer=>peer.request('placementReceipt',{id})));
+ const {plan,expected}=await rpc.prepare({address,manifestId:id,sizeBytes:file.size});
+ await assert.rejects(()=>peers[0].request('review',{id,plan,expected,placementReceipts:placementReceipts.slice(0,1)}),/PLACEMENT_RECEIPTS_REQUIRED/);
+ await assert.rejects(()=>peers[0].request('review',{id,plan,expected,placementReceipts:[placementReceipts[0],placementReceipts[0]]}),/INVALID_PLACEMENT_RECEIPT/);
+ const unsigned=k.Transaction.deserializeFromSafeJSON(plan.unsignedJson),signed=k.signTransaction(unsigned,[key],true),signedJson=signed.serializeToSafeJSON();
+ signed.free();unsigned.free();
+ const authorized=await Promise.all(peers.map(peer=>peer.request('authorize',{id,plan,expected,signedJson,placementReceipts})));
+ assert.equal(authorized[0].transactionId,authorized[1].transactionId);
+ state.transactionId=authorized[0].transactionId;
+ await assert.rejects(()=>peers[1].request('beginSend',{manifestId:id}),/PLACEMENT_COORDINATOR_REQUIRED/);
+ await peers[0].request('beginSend',{manifestId:id});
+ state.accepted=true;
+ for(const peer of peers)assert.equal((await peer.request('confirm',{manifestId:id})).state,'CONFIRMED');
+ const head=await peers[0].request('headChallenge',{manifestId:id});
+ const record={body:head.body,signature:k.signMessage({message:head.message,privateKey:key})};
+ await assert.rejects(()=>peers[1].request('headAuthorize',{record}),/INVALID_PLACEMENT_HEAD/);
+ const {placementWitness}=await peers[0].request('headAuthorize',{record});
+ await peers[1].request('headAuthorize',{record,placementWitness});
+ peers[0].close();await servers[0].close();servers[0]=null;
+ peers[1].close();await servers[1].close();servers[1]=null;
+ const restarted=await new PeerStore({directory:path.join(dir,'1'),rpc,quotaBytes:64*1024**2}).init();
+ assert.equal(restarted.hello('ab'.repeat(32)).body.cellPlacementVersion,undefined);
+ servers[1]=await startPeerServer({store:restarted,origins:['http://127.0.0.1:5191']});
+ const fresh=clientFor(servers[1].port,{pin:placement[1]});peers.push(fresh);await fresh.connect();
+ const resolved=await fresh.request('resolve',{rootManifestId:id});
+ assert.equal(resolved.publication.id,id);
+ const remaining=[];
+ for(let shard=1;shard<N;shard+=2)remaining.push({index:shard,data:await fresh.request('get',{id,file:0,stripe:0,shard})});
+ assert.equal(hash(reconstructStripe(publication.manifest.files[0].stripes[0],remaining)),hash(source));
+ assert.equal(state.submissions,0);
+});
