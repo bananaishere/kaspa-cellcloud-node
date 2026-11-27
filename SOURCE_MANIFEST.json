@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "d059beafcbf3d1919127f362bb5043de7a2e6006",
+  "sourceCommit": "7fa4982e8f4bf6302db16e11672fd7b916911778",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -34,7 +34,7 @@
     {
       "path": "README.md",
       "bytes": 6678,
-      "sha256": "318d8247a4b0ac7a69c30e1ec59cfdadf06b0e529b2c1253edc7e668ae33b760"
+      "sha256": "d65a067c3b7a9adccc3fae5ce387fbf9e87118ea93b5c1139a75f6d530e67549"
     },
     {
       "path": "SECURITY.md",
@@ -64,7 +64,7 @@
     {
       "path": "docs/START_HERE.pt.md",
       "bytes": 11185,
-      "sha256": "dfc08c738e97a94cb366fe9fd219cb1550672ffdbaf0de6daab7b07ef494c2d6"
+      "sha256": "4b6535868a8b61b5ab7ac6cd5ead00d1db7aa73ab6c2c1b996ab12095172d4ce"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -163,8 +163,8 @@
     },
     {
       "path": "peer/store.mjs",
-      "bytes": 20092,
-      "sha256": "b41e7a910d3c0d11308a2aa4fe156097de122c1023851eb673b5e778216beb7e"
+      "bytes": 20627,
+      "sha256": "88afc5977190ed89955c1df1118af1f69fe62cf7e0210f25f1f45bd55b957c72"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -198,8 +198,8 @@
     },
     {
       "path": "protocol/manifest.js",
-      "bytes": 4990,
-      "sha256": "356a544cd4fa7b78d772298c31249a9c8a937c8e68e2ebe18174fc8460277bdc"
+      "bytes": 5301,
+      "sha256": "8536b1e127c785aafb27315907eeb696aa97fc1b0608aac01b28968c9ae4e4fd"
     },
     {
       "path": "protocol/network.js",
@@ -424,7 +424,7 @@
     {
       "path": "windows/installer.iss",
       "bytes": 1001,
-      "sha256": "3d07083326707c2bd9eaa0ee01e2a9510b098943efd8ac22b31ae10cbb152748"
+      "sha256": "be037fe0409d2ee857647c7cfa41c6cd79767b6d10a91a7d58d363654e4a12e0"
     },
     {
       "path": "windows/mail.mjs",
