@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "03632cfa42267b768dab5821106616e9d2e78a20",
+  "sourceCommit": "e5f85ac94cd7fad4d0793adda0331c546c4a04f3",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -34,7 +34,7 @@
     {
       "path": "README.md",
       "bytes": 6678,
-      "sha256": "0c2cdce53faf8913c87ed649b771f76df04642652ce30ee3d33633e01391c20b"
+      "sha256": "d251537ecfd1ff183defa5f092ca595ca051413d8dd869f3113268d0f8b68c8e"
     },
     {
       "path": "SECURITY.md",
@@ -63,8 +63,8 @@
     },
     {
       "path": "docs/START_HERE.pt.md",
-      "bytes": 12091,
-      "sha256": "9a51b13fec5aecba3e85b05e6d54a28ec32957d4107d35d0bdd548e94c9ad310"
+      "bytes": 11177,
+      "sha256": "2c42ceb13de9fea0ceeac5734c0e4b03f9accd92443135d5fac4d1b61d6c0290"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -403,13 +403,13 @@
     },
     {
       "path": "windows/NodeWindow.cs",
-      "bytes": 46196,
-      "sha256": "912609630a155485480b4f01b6f64a92976c8c290c67b3bb45fe41d639f1be2e"
+      "bytes": 37665,
+      "sha256": "7b74ff2171d760cd738f508dfc0efeccc1e1039093fa15b9f272880a97f68864"
     },
     {
       "path": "windows/README.md",
-      "bytes": 4526,
-      "sha256": "76d9185e97b8644022528e66ca77898178cc181065b23fc17054c7522b6446bd"
+      "bytes": 3871,
+      "sha256": "8ba9a74335db540474d1f97e3c46ea747499b26b24af9e52c3d95485b72463ec"
     },
     {
       "path": "windows/assets/kaspa.png",
@@ -424,12 +424,12 @@
     {
       "path": "windows/installer.iss",
       "bytes": 1001,
-      "sha256": "d2b5e9ae61bbb5e6d21f5015e327c20cc0f4f60ca17d4f091e36298d4cc1b8b8"
+      "sha256": "77829fa9bc90d34085c3eacdcb2743282b41488edc6376e494664e2d795967d4"
     },
     {
       "path": "windows/mail.mjs",
-      "bytes": 3047,
-      "sha256": "9f5b8298e7c6082f85f499bb5c514c5f53e7409cb51b08eb57406d708f6264e5"
+      "bytes": 3570,
+      "sha256": "c0b11793323f49aca45ff10174b3a8cb29b3ef13f1add4f3aaf785c0306c02c6"
     },
     {
       "path": "windows/operator.mjs",
@@ -438,8 +438,8 @@
     },
     {
       "path": "windows/smoke.mjs",
-      "bytes": 6034,
-      "sha256": "c77af2f36fd23d452ccb3a463ad3a99613b6baf23c825193c006ad4f27b9bccc"
+      "bytes": 6557,
+      "sha256": "5fbedb5dbe08e0fb416b35218fe05debacf462e7f41a7ccd85a6fe9b3b2b15ed"
     }
   ]
 }
