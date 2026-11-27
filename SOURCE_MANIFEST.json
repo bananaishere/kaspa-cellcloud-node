@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "2a814d87ac2ab170a766cd65333ea28bdab78f67",
+  "sourceCommit": "03632cfa42267b768dab5821106616e9d2e78a20",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -33,8 +33,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6675,
-      "sha256": "631382f7a691d7b8de4e9666caa042df7a7abff61357ade3f3c48b3571fd3f83"
+      "bytes": 6678,
+      "sha256": "0c2cdce53faf8913c87ed649b771f76df04642652ce30ee3d33633e01391c20b"
     },
     {
       "path": "SECURITY.md",
@@ -63,8 +63,8 @@
     },
     {
       "path": "docs/START_HERE.pt.md",
-      "bytes": 11704,
-      "sha256": "846927a9ba4b7ba3941abd60ba7d79c57b9d9b5ceecd32555cda7700a57ea24a"
+      "bytes": 12091,
+      "sha256": "9a51b13fec5aecba3e85b05e6d54a28ec32957d4107d35d0bdd548e94c9ad310"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -113,18 +113,18 @@
     },
     {
       "path": "peer/backup.mjs",
-      "bytes": 5821,
-      "sha256": "d3f677d0d16aab560259aa1c9fe9979fde987d1b7c0e1462361129b0ebe2b3e4"
+      "bytes": 6087,
+      "sha256": "610996d558a2e722147f2ffc5f04964fd34d7af1a335a81702402515f1865d61"
     },
     {
       "path": "peer/cli.mjs",
-      "bytes": 6347,
-      "sha256": "7d1114602c1c931e059cb80c1c5113998ccf6ab95a86daf3b05682ddf8b48e87"
+      "bytes": 6406,
+      "sha256": "257e5e515f21b970f4724a33f75544179eaa36a1ae0b04bf0b8830b179d2b71c"
     },
     {
       "path": "peer/heads.mjs",
-      "bytes": 10160,
-      "sha256": "996103667b2cdd67bece0dd79b5f1958272a405a3bbda93c0fcdcb02d5d0e005"
+      "bytes": 10790,
+      "sha256": "b4210781e9af704bca51e661d84f43152580063646c768b322fb576747603e9c"
     },
     {
       "path": "peer/operator-config.mjs",
@@ -148,8 +148,8 @@
     },
     {
       "path": "peer/replica-data.mjs",
-      "bytes": 7792,
-      "sha256": "f89ce0cab526969f742a169dfcb609bbbdb9a6f08906a50d8d0170fcb97f021f"
+      "bytes": 8212,
+      "sha256": "83e9b9e23f7424f46a29eb0e05f267dd2f6ce10fb4c0d13ead94c87f59f77eb9"
     },
     {
       "path": "peer/replication.mjs",
@@ -158,18 +158,23 @@
     },
     {
       "path": "peer/server.mjs",
-      "bytes": 13033,
-      "sha256": "3f837673b8858ec7b8f83c7f7cc3e0b3368abfc98a4f52ac9ab058645e2e9e0c"
+      "bytes": 13452,
+      "sha256": "89f39f63bc654034762e80a829655a0e4796d0786070bf3ad35c7bafd861e9ce"
     },
     {
       "path": "peer/store.mjs",
-      "bytes": 18473,
-      "sha256": "e20e351a955b2a35dc2c10e93366ec0deaa2bc4e9efe1c93958a276039435ff3"
+      "bytes": 20092,
+      "sha256": "b41e7a910d3c0d11308a2aa4fe156097de122c1023851eb673b5e778216beb7e"
     },
     {
       "path": "pnpm-lock.yaml",
       "bytes": 58997,
       "sha256": "1c485a47b6a48552f047f31c9c236b7eadf72f77f3074abf39deb4f3f32a87f0"
+    },
+    {
+      "path": "protocol/cell-placement.js",
+      "bytes": 2702,
+      "sha256": "3fd13a04e2bb785eca91ce3c2546eeeb6e3fcef0fe674ed777e38e3fc8b99f85"
     },
     {
       "path": "protocol/codec.js",
@@ -328,8 +333,8 @@
     },
     {
       "path": "test/peer-node.test.mjs",
-      "bytes": 11573,
-      "sha256": "a004f0151766c2244e31527653e852c4b6780124d397b7a0c0bb5c46ee068c05"
+      "bytes": 16047,
+      "sha256": "85a0fb840e50f3a949e202b1e099d4ee98d577472cb96599723be2b6737a981b"
     },
     {
       "path": "test/peer-relay.test.mjs",
@@ -398,23 +403,28 @@
     },
     {
       "path": "windows/NodeWindow.cs",
-      "bytes": 35581,
-      "sha256": "4f436c4f71139519d5d60e2c72ab1d22ef58d6b1f233ca8b1497cf2d5316e41d"
+      "bytes": 46196,
+      "sha256": "912609630a155485480b4f01b6f64a92976c8c290c67b3bb45fe41d639f1be2e"
     },
     {
       "path": "windows/README.md",
-      "bytes": 4300,
-      "sha256": "1769a1405a50ba7f2837a514b8352af5d4d0df96ded46c9b5f4e3c43c995178a"
+      "bytes": 4526,
+      "sha256": "76d9185e97b8644022528e66ca77898178cc181065b23fc17054c7522b6446bd"
+    },
+    {
+      "path": "windows/assets/kaspa.png",
+      "bytes": 13033,
+      "sha256": "e302d84d70946d193e9dc2280cd19630a79d12de9e8fab5ece267bc1743960fb"
     },
     {
       "path": "windows/build.ps1",
-      "bytes": 3664,
-      "sha256": "ebb713bea0c143cef2e5b7a39dea21a04f557b13665783e55b5a2e51f93880b2"
+      "bytes": 3756,
+      "sha256": "37e87688d9b05a8fb35d77ace66cae162cb1ca4b10772d76dbb260e339b22f12"
     },
     {
       "path": "windows/installer.iss",
-      "bytes": 1000,
-      "sha256": "9c369970c423f32cc1188680257549f06b322533a42f51965dee2069d8431583"
+      "bytes": 1001,
+      "sha256": "d2b5e9ae61bbb5e6d21f5015e327c20cc0f4f60ca17d4f091e36298d4cc1b8b8"
     },
     {
       "path": "windows/mail.mjs",
