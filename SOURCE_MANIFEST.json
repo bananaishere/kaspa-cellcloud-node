@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "f79334828872946c931d55db2fda7e8f9c3959c5",
+  "sourceCommit": "d059beafcbf3d1919127f362bb5043de7a2e6006",
   "releaseVersion": "0.2.0-testnet.5",
   "license": "MIT",
   "network": "testnet-10",
@@ -34,7 +34,7 @@
     {
       "path": "README.md",
       "bytes": 6678,
-      "sha256": "a76b41a44723c6de50bbbf5d5635e9a0cbbe73318284e6de3142d6d209d3c0eb"
+      "sha256": "318d8247a4b0ac7a69c30e1ec59cfdadf06b0e529b2c1253edc7e668ae33b760"
     },
     {
       "path": "SECURITY.md",
@@ -64,7 +64,7 @@
     {
       "path": "docs/START_HERE.pt.md",
       "bytes": 11185,
-      "sha256": "28fa3a7f5dce2e89de230db0504cd3eb587a9c2329fc135226ed93b7ad69e784"
+      "sha256": "dfc08c738e97a94cb366fe9fd219cb1550672ffdbaf0de6daab7b07ef494c2d6"
     },
     {
       "path": "lab/kaspa/payment.mjs",
@@ -424,7 +424,7 @@
     {
       "path": "windows/installer.iss",
       "bytes": 1001,
-      "sha256": "8101c12b56046989dae9464af9e9ee7c2c86e487468bc33214ac627926549df9"
+      "sha256": "3d07083326707c2bd9eaa0ee01e2a9510b098943efd8ac22b31ae10cbb152748"
     },
     {
       "path": "windows/mail.mjs",
@@ -433,13 +433,13 @@
     },
     {
       "path": "windows/operator.mjs",
-      "bytes": 6448,
-      "sha256": "60298a3cbc0d987a2c5fade5463b142b3e50475fa9f9ec2b81fb82fd885bd169"
+      "bytes": 6510,
+      "sha256": "3d18956dc7df817ca8f0693a26f81bbdd5204698826e526a73b7c48db165b2ab"
     },
     {
       "path": "windows/smoke.mjs",
-      "bytes": 6466,
-      "sha256": "fe8ae22feb04ce651f377414e4f5d07fa895424f2cb4dda4877d8d8c1ea62044"
+      "bytes": 6634,
+      "sha256": "de342e2a1810113b5999c4a9e531408f11d6c0627dcc261154ccd8c054519c78"
     }
   ]
 }
