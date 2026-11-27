@@ -12,6 +12,7 @@ import {PeerHeads} from './heads.mjs';
 import {updateIntent} from '../lab/lib/payment-intent.mjs';
 import {publicUploadPolicy} from '../protocol/upload-admission.js';
 import {assignedCellDigests,placementNodes,signPlacementReceipt,verifyPlacementReceipts} from '../protocol/cell-placement.js';
+import {readVaultHeader} from '../lab/lib/vault-format.mjs';
 
 export async function atomic(file,value){
  const temp=file+'.'+randomUUID()+'.tmp',handle=await fs.open(temp,'wx',0o600);
@@ -72,6 +73,7 @@ export class PeerStore{
   const body={protocol:PROTOCOL,networkId:this.network,nodeId:this.nodeId,publicKey:this.publicKey,nonce,cellBytes:CELL,data:K,total:N,quotaBytes:this.quotaBytes,usedBytes:this.usedBytes,paymentVerification:Boolean(this.rpc),writesEnabled:!this.recoveryReadOnly&&this.network==='testnet-10'&&Boolean(this.rpc),timestamp:this.now(),replicaChallenge:randomBytes(32).toString('hex'),replicas:this.replicaPeers};
   body.publicUploads=this.publicUploads;
   if(this.distributedUploads&&body.writesEnabled&&this.publicUploads.enabled)body.cellPlacementVersion=1;
+  if(body.writesEnabled&&this.publicUploads.enabled)body.vaultVersion=1;
   return {body,signature:bytesToHex(ed25519.sign(utf8(canonicalJson(body)),this.secret))};
  }
  validateJob(job,id){
@@ -103,7 +105,7 @@ export class PeerStore{
   requirePaymentNetwork(this.network);if(!this.rpc)throw Error('PEER_PAYMENT_RPC_REQUIRED');
   if(typeof manifestText!=='string'||Buffer.byteLength(manifestText)>16*1024**2||hash(manifestText)!==id)throw Error('MANIFEST_HASH_MISMATCH');
   const manifest=JSON.parse(manifestText),summary=validateManifest(manifest,id);
-  if(manifest.mode==='vault')throw Error('PEER_VAULT_NOT_SUPPORTED');
+  if(manifest.mode==='vault'&&(!admission||name!=='Private vault'||update!==undefined||placement!==undefined))throw Error('PEER_VAULT_NOT_SUPPORTED');
   if(accountScript(address)!=='000020'+manifest.author_pubkey+'ac')throw Error('AUTHOR_WALLET_MISMATCH');
   if(!address.startsWith('kaspatest:')||typeof name!=='string'||!name.trim()||name!==name.trim()||name.length>80)throw Error('INVALID_PUBLICATION_REQUEST');
   const nodes=placement===undefined?null:placementNodes(placement);
@@ -164,6 +166,12 @@ export class PeerStore{
   if(this.recoveryReadOnly)throw Error('RECOVERY_VERIFICATION_ONLY');
   const job=this.job(id);if(job.state!=='STAGED')throw Error('EXISTING_PAYMENT_MUST_BE_RESUMED');
   await this.complete(job);
+  if(job.manifest.mode==='vault'){
+   const entry=job.manifest.files[0];
+   const first=await fs.readFile(this.base('cells',entry.stripes[0].digests[0]));
+   const {header,offset}=readVaultHeader(first);
+   if(header.owner!==job.manifest.author_pubkey||entry.length<offset+16)throw Error('INVALID_VAULT_CONTAINER');
+  }
   if(job.placement)verifyPlacementReceipts(placementReceipts,{networkId:this.network,manifestId:id,nodes:job.placement,acceptedAt});
   if(job.update){this.heads.updateContext(job.update,job.manifest.author_pubkey);this.checkUpdateReservation(job);}
   const independentlyExpected=this.rpc.expected({address:job.address,manifestId:id,sizeBytes:this.metadata(job).sizeBytes,update:job.update});

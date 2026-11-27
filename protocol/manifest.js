@@ -2,9 +2,11 @@ import {sha256} from '@noble/hashes/sha2.js';
 import {bytesToHex} from '@noble/hashes/utils.js';
 import {CELL,K,N,encode,decode} from './codec.js';
 import {hash,isDigest,merkle,merkleProof} from './integrity.js';
+import {VAULT_FILE} from '../lab/lib/vault-format.mjs';
 
 export const MAX_CONTENT_BYTES=5*1024**3;
 export const MAX_MANIFEST_BYTES=16*1024**2;
+export const MAX_VAULT_BYTES=500*1024**2;
 const stripeBytes=CELL*K;
 const check=(condition,code)=>{if(!condition)throw Error(code);};
 export function safeName(name){
@@ -19,6 +21,7 @@ export function validateManifest(manifest,id){
  check(manifest.mode===undefined||['drive','web','vault'].includes(manifest.mode),'INVALID_CONTENT_MODE');
  const names=new Set();let size=0;
  const entries=[...manifest.files,...(manifest.originalArchive?[manifest.originalArchive]:[])];
+ if(manifest.mode==='vault')check(!manifest.originalArchive&&entries.length===1&&entries[0]?.name===VAULT_FILE&&isDigest(manifest.author_pubkey)&&entries[0].length<=MAX_VAULT_BYTES,'INVALID_VAULT_MANIFEST');
  for(const file of entries){
   safeName(file.name);check(!names.has(file.name),'DUPLICATE_FILE_NAME');names.add(file.name);
   check(Number.isSafeInteger(file.length)&&file.length>=0&&isDigest(file.sha256)&&Array.isArray(file.stripes)&&file.stripes.length===Math.max(1,Math.ceil(file.length/stripeBytes)),'INVALID_FILE_ENTRY');
@@ -33,7 +36,7 @@ export function validateManifest(manifest,id){
 
 // Two passes keep memory bounded: analyse only retains hashes; transfer encodes
 // one stripe at a time and releases it after every receiver acknowledgement.
-export async function analyseFiles(files,{author,progress=()=>{},signal}={}){
+export async function analyseFiles(files,{author,mode='drive',progress=()=>{},signal}={}){
  check(Array.isArray(files)&&files.length>0&&files.length<=10000,'FILES_REQUIRED');
  const total=files.reduce((sum,f)=>sum+f.size,0);check(Number.isSafeInteger(total)&&total<=MAX_CONTENT_BYTES,'CONTENT_SIZE_LIMIT');
  const sorted=[...files].sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0),entries=[];let done=0;
@@ -47,7 +50,7 @@ export async function analyseFiles(files,{author,progress=()=>{},signal}={}){
   }
   entries.push({name:file.name,length:file.size,sha256:bytesToHex(digest.digest()),stripes});
  }
- const manifest={version:1,cellBytes:CELL,data:K,total:N,files:entries,mode:'drive',...(author?{author_pubkey:author}:{})};
+ const manifest={version:1,cellBytes:CELL,data:K,total:N,files:entries,mode,...(author?{author_pubkey:author}:{})};
  const id=hash(JSON.stringify(manifest)),summary=validateManifest(manifest,id);return {id,manifest,...summary};
 }
 export async function encodeFileStripe(file,entry,index){
