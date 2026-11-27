@@ -4,8 +4,9 @@ Use the x64 installer to run a fresh node in your Windows account. Node.js and
 Caddy are included. The interface follows your Windows language (Portuguese or
 English). Each mode has a separate storage directory and node identity. Existing
 command-line nodes and community registrations are independent of this installer.
-Open **Step-by-step guide** in the main window for the public, private,
-replication and mail walkthroughs. The same guide is
+The right-hand guide has **Português** and **English** tabs. Open
+**Step-by-step guide** for the public, private, replication and mail
+walkthroughs. The same guide is
 [available in Portuguese](../docs/START_HERE.pt.md).
 
 If you already run a node, use the **Existing node** tab or the
@@ -16,10 +17,13 @@ If you already run a node, use the **Existing node** tab or the
 1. Open **CellCloud Node (Testnet-10)** from Start. Pick **Private on this
    computer**, choose a folder and storage limit, and click **Start**.
 2. Click **Check connection**. Use the displayed loopback address in your local
-   CellCloud app. The private upload token remains in the local node folder. Keep
-   the window open or minimized while using the node. Closing it stops the node.
-3. Optionally enable **Start when I sign into Windows**. Updating or uninstalling
-   the app retains your data folder. Stop the app before installing an update.
+   CellCloud app. The private upload token remains in the local node folder.
+3. While the node is running, minimize the window or click **X** to put it in the
+   Windows notification area. Double-click the icon to reopen the window. The
+   icon's menu includes **Stop node** and **Stop and exit**.
+4. Optionally enable **Start when I sign into Windows** to start the node in the
+   notification area at sign-in. Before updating, choose **Stop and exit**. An
+   update or uninstall retains your data folder.
 
 The desktop program manages one running node at a time. To keep a public and a
 private node running on the same PC, use the program for one and the CLI for

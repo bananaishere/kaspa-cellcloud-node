@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
@@ -17,8 +18,10 @@ static class Program {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         bool first;
-        using (var mutex = new System.Threading.Mutex(true, @"Local\CellCloudNodeDesktop", out first)) {
-            if (first) Application.Run(new NodeWindow(Array.IndexOf(args, "--start") >= 0));
+        using (var mutex = new System.Threading.Mutex(true, @"Local\CellCloudNodeDesktop", out first))
+        using (var showRequest = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, @"Local\CellCloudNodeDesktop.Show")) {
+            if (first) Application.Run(new NodeWindow(Array.IndexOf(args, "--start") >= 0, showRequest));
+            else showRequest.Set();
         }
     }
 }
@@ -26,9 +29,11 @@ static class Program {
 sealed class NodeWindow : Form {
     const string Guide = "https://kaspacellcloud.vercel.app/?operator-guide=1#nodes";
     const string Repository = "https://github.com/bananaishere/kaspa-cellcloud-node";
+    static readonly Color Canvas = Color.FromArgb(239, 245, 243), Ink = Color.FromArgb(20, 43, 41);
+    static readonly Color Muted = Color.FromArgb(70, 92, 87), Teal = Color.FromArgb(23, 96, 84);
+    static readonly Color Mint = Color.FromArgb(110, 199, 185), Rule = Color.FromArgb(211, 224, 220);
     readonly bool pt = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt";
-    readonly string home = AppDomain.CurrentDomain.BaseDirectory;
-    readonly string settings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CellCloudNode", "desktop.json");
+    readonly string home, settings;
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     readonly ComboBox mode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
     readonly TextBox name = new TextBox(), domain = new TextBox(), folder = new TextBox();
@@ -40,25 +45,54 @@ sealed class NodeWindow : Form {
     readonly Button start = new Button(), stop = new Button(), check = new Button(), register = new Button();
     readonly Button replication = new Button();
     readonly Button checkMail = new Button(), registerMail = new Button();
+    readonly Button moveToTray = new Button();
     readonly Label status = new Label { AutoSize = true, MaximumSize = new Size(520, 0) };
+    readonly Label connectionBadge = new Label();
     readonly TextBox details = new TextBox { ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, Height = 82 };
+    readonly NotifyIcon tray = new NotifyIcon();
+    readonly ContextMenuStrip trayMenu = new ContextMenuStrip();
+    readonly ToolStripMenuItem trayStop = new ToolStripMenuItem(), trayExit = new ToolStripMenuItem();
+    readonly Timer showTimer = new Timer { Interval = 250 };
+    readonly Icon brandIcon;
+    readonly Image brandImage;
     Process node, proxy;
     string payload, publicProfile, mailProfile;
     bool working, closing;
 
     string L(string portuguese, string english) { return pt ? portuguese : english; }
 
-    public NodeWindow(bool autoStart) {
+    [DllImport("user32.dll")] static extern bool DestroyIcon(IntPtr handle);
+
+    public NodeWindow(bool autoStart, System.Threading.EventWaitHandle showRequest, string payloadDirectory=null, string settingsFile=null) {
+        home = payloadDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
+        settings = settingsFile ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CellCloudNode", "desktop.json");
         Text = "CellCloud Node · Testnet-10";
-        ClientSize = new Size(650, 600);
-        MinimumSize = new Size(625, 565);
+        ClientSize = new Size(1020, 685);
+        MinimumSize = new Size(850, 575);
+        BackColor = Canvas;
+        ForeColor = Ink;
         Font = new Font("Segoe UI", 10);
         StartPosition = FormStartPosition.CenterScreen;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 2, AutoScroll = true };
+        using (var stream = typeof(NodeWindow).Assembly.GetManifestResourceStream("CellCloud.NodeIcon.png")) {
+            if (stream != null) using(var original = Image.FromStream(stream)) brandImage = new Bitmap(original);
+        }
+        brandIcon = CreateBrandIcon(brandImage);
+        Icon = brandIcon ?? SystemIcons.Application;
+        var frame = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(14), ColumnCount = 2, RowCount = 2 };
+        frame.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        frame.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 318));
+        frame.RowStyles.Add(new RowStyle(SizeType.Absolute, 77));
+        frame.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        Controls.Add(frame);
+        var header = BuildHeader();
+        frame.Controls.Add(header, 0, 0);
+        frame.SetColumnSpan(header, 2);
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(18), Margin = new Padding(0, 0, 12, 0), ColumnCount = 2, AutoScroll = true, BackColor = Color.White };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 175));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        Controls.Add(layout);
-        var title = new Label { Text = L("Configurar o teu nó", "Set up your node"), AutoSize = true, Font = new Font(Font.FontFamily, 19, FontStyle.Bold), Margin = new Padding(0, 0, 0, 12) };
+        frame.Controls.Add(layout, 0, 1);
+        frame.Controls.Add(BuildSideGuide(), 1, 1);
+        var title = new Label { Text = L("Configuração do nó", "Node settings"), AutoSize = true, Font = new Font(Font.FontFamily, 16, FontStyle.Bold), Margin = new Padding(0, 0, 0, 12) };
         Full(layout, title);
         mode.Items.AddRange(new object[] { L("Privado neste computador", "Private on this computer"), L("Público da comunidade", "Public community node") });
         mode.SelectedIndex = 0;
@@ -83,7 +117,7 @@ sealed class NodeWindow : Form {
         Row(layout, L("Porta local do correio", "Local mail port"), mailPort);
         Full(layout, startup);
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        foreach(var button in new[] { start, stop, check, register }) { button.AutoSize = true; actions.Controls.Add(button); }
+        foreach(var button in new[] { start, stop, check, register }) { StyleButton(button, button == start); actions.Controls.Add(button); }
         start.Text = L("Iniciar", "Start"); stop.Text = L("Parar", "Stop");
         check.Text = L("Verificar ligação", "Check connection"); register.Text = L("Abrir registo público", "Open public registration");
         Full(layout, actions);
@@ -91,8 +125,11 @@ sealed class NodeWindow : Form {
         checkMail.Text = L("Verificar k@sMail", "Check k@sMail");
         registerMail.Text = L("Abrir registo de correio", "Open mail registration");
         var extraActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        foreach (var button in new[] { replication, checkMail, registerMail }) { button.AutoSize = true; extraActions.Controls.Add(button); }
+        foreach (var button in new[] { replication, checkMail, registerMail, moveToTray }) { StyleButton(button, false); extraActions.Controls.Add(button); }
+        moveToTray.Text = L("Manter junto ao relógio", "Minimize to tray");
         Full(layout, extraActions);
+        status.ForeColor = Muted;
+        status.Margin = new Padding(0, 10, 0, 8);
         Full(layout, status);
         Full(layout, details);
         var links = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
@@ -123,15 +160,155 @@ sealed class NodeWindow : Form {
         checkMail.Click += async (s,e) => await Run(CheckMailNode);
         registerMail.Click += (s,e) => RegisterMailNode();
         replication.Click += async (s, e) => await Run(ManageReplication);
-        FormClosing += async (s, e) => {
-            if (closing || (node == null && !working)) return;
-            e.Cancel = true;
-            if (working) return;
-            await Run(StopNode);
-            if (node == null) { closing = true; Close(); }
-        };
+        moveToTray.Click += (s,e) => HideInTray();
+        SetUpTray();
+        if(showRequest!=null){
+            showTimer.Tick += (s,e) => { if(showRequest.WaitOne(0)) RestoreFromTray(); };
+            showTimer.Start();
+        }
         RefreshButtons();
-        if (autoStart) Shown += async (s, e) => await Run(StartNode);
+        if (autoStart) Shown += async (s, e) => { await Run(StartNode); if(node!=null) HideInTray(); };
+    }
+
+    static Icon CreateBrandIcon(Image image) {
+        if (image == null) return null;
+        using (var bitmap = new Bitmap(image, new Size(32, 32))) {
+            var handle = bitmap.GetHicon();
+            try { using(var icon = System.Drawing.Icon.FromHandle(handle)) return (Icon)icon.Clone(); }
+            finally { DestroyIcon(handle); }
+        }
+    }
+
+    Control BuildHeader() {
+        var header = new TableLayoutPanel {
+            Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(14, 6, 14, 6),
+            ColumnCount = 3, RowCount = 1, BackColor = Color.FromArgb(16, 50, 45)
+        };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        header.Controls.Add(new PictureBox { Image = brandImage, SizeMode = PictureBoxSizeMode.Zoom, Size = new Size(40, 40), Anchor = AnchorStyles.Left }, 0, 0);
+        var identity = new FlowLayoutPanel { AutoSize = true, WrapContents = false, FlowDirection = FlowDirection.TopDown, Anchor = AnchorStyles.Left };
+        identity.Controls.Add(new Label { Text = "CellCloud Node", ForeColor = Color.White, AutoSize = true, Font = new Font(Font.FontFamily, 16, FontStyle.Bold), Margin = Padding.Empty });
+        identity.Controls.Add(new Label { Text = "Kaspa Testnet-10", ForeColor = Mint, AutoSize = true, Margin = new Padding(1, 1, 0, 0) });
+        header.Controls.Add(identity, 1, 0);
+        connectionBadge.AutoSize = true;
+        connectionBadge.Padding = new Padding(10, 5, 10, 5);
+        connectionBadge.Anchor = AnchorStyles.Right;
+        header.Controls.Add(connectionBadge, 2, 0);
+        return header;
+    }
+
+    Control BuildSideGuide() {
+        var area = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Color.White, Padding = new Padding(13), Margin = Padding.Empty };
+        area.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        area.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        area.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        area.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        area.Controls.Add(new Label { Text = L("Como funciona", "How it works"), AutoSize = true, Font = new Font(Font.FontFamily, 14, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) }, 0, 0);
+        var tabs = new TabControl { Dock = DockStyle.Fill, Margin = Padding.Empty, AccessibleName = L("Idioma da ajuda", "Help language") };
+        tabs.TabPages.Add(SideGuidePage(true));
+        tabs.TabPages.Add(SideGuidePage(false));
+        tabs.SelectedIndex = pt ? 0 : 1;
+        area.Controls.Add(tabs, 0, 1);
+        var guide = new Button { Text = L("Abrir guia completo…", "Open full guide…"), Anchor = AnchorStyles.Left };
+        StyleButton(guide, false);
+        guide.Click += (s,e) => ShowWalkthrough();
+        area.Controls.Add(guide, 0, 2);
+        return area;
+    }
+
+    TabPage SideGuidePage(bool portuguese) {
+        var panel = new TabPage(portuguese ? "Português" : "English") { AutoScroll = true, BackColor = Color.White };
+        var content = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, Padding = new Padding(10, 10, 6, 4) };
+        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        panel.Controls.Add(content);
+        var items = portuguese ? new[,] {
+            {"Escolher o modo", "O modo privado guarda ficheiros neste PC. O modo público partilha espaço com a comunidade."},
+            {"Ligar e verificar", "Para um nó público, configura o domínio e as portas 80 e 443. Inicia o nó e verifica a ligação antes de registar o perfil."},
+            {"Receber deploys", "Ativa os uploads por carteira. A CellCloud reparte as células quando encontra dois ou mais nós compatíveis."},
+            {"Deixar o nó ligado", "Minimiza ou fecha a janela enquanto o nó corre. Usa o ícone junto ao relógio para abrir, parar ou sair."}
+        } : new[,] {
+            {"Choose a mode", "The private mode stores files on this PC. The public mode shares storage with the community."},
+            {"Start and check", "For a public node, set up your hostname and ports 80 and 443. Start the node and check connectivity before registering its profile."},
+            {"Accept deployments", "Enable wallet-authorized uploads. CellCloud distributes cells when at least two compatible nodes are available."},
+            {"Keep the node running", "Minimize or close the window while the node is running. Use the icon by the clock to open, stop or exit."}
+        };
+        for(var index = 0; index < items.GetLength(0); index++) {
+            content.Controls.Add(new Label { Text = items[index,0], AutoSize = true, Font = new Font(Font.FontFamily, 10, FontStyle.Bold), ForeColor = Teal, Margin = new Padding(0, 2, 0, 4) });
+            content.Controls.Add(new Label { Text = items[index,1], AutoSize = true, MaximumSize = new Size(222,0), ForeColor = Muted, Margin = new Padding(0, 0, 0, 13) });
+        }
+        return panel;
+    }
+
+    static void StyleButton(Button button, bool primary) {
+        button.AutoSize = true;
+        button.Padding = new Padding(5, 2, 5, 2);
+        button.FlatStyle = FlatStyle.Flat;
+        button.UseVisualStyleBackColor = false;
+        button.BackColor = primary ? Teal : Canvas;
+        button.ForeColor = primary ? Color.White : Ink;
+        button.FlatAppearance.BorderColor = primary ? Teal : Rule;
+    }
+
+    void SetUpTray() {
+        tray.Icon = Icon;
+        tray.ContextMenuStrip = trayMenu;
+        tray.Visible = true;
+        trayMenu.Items.Add(L("Abrir CellCloud Node", "Open CellCloud Node"), null, (s,e)=>RestoreFromTray());
+        trayMenu.Items.Add(new ToolStripSeparator());
+        trayStop.Text = L("Parar nó", "Stop node");
+        trayStop.Click += async (s,e)=>await Run(StopNode);
+        trayMenu.Items.Add(trayStop);
+        trayExit.Text = L("Parar e sair", "Stop and exit");
+        trayExit.Click += async (s,e)=>await ExitFromTray();
+        trayMenu.Items.Add(trayExit);
+        tray.DoubleClick += (s,e)=>RestoreFromTray();
+        Resize += (s,e)=>{ if(WindowState==FormWindowState.Minimized) HideInTray(); };
+    }
+
+    void HideInTray() {
+        Hide();
+    }
+
+    void RestoreFromTray() {
+        Show();
+        if(WindowState==FormWindowState.Minimized)WindowState=FormWindowState.Normal;
+        Activate();
+    }
+
+    async Task ExitFromTray() {
+        if(working)return;
+        if(node!=null)await Run(StopNode);
+        if(node!=null){RestoreFromTray();return;}
+        closing=true;
+        Close();
+    }
+
+    protected override void OnFormClosing(FormClosingEventArgs args) {
+        if(!closing&&args.CloseReason==CloseReason.UserClosing&&(node!=null||working)){
+            args.Cancel=true;
+            HideInTray();
+        }
+        base.OnFormClosing(args);
+    }
+
+    protected override void OnFormClosed(FormClosedEventArgs args) {
+        showTimer.Dispose();
+        tray.Visible=false;
+        tray.Dispose();
+        trayMenu.Dispose();
+        if(node!=null)try{node.StandardInput.Close();}catch(InvalidOperationException){}
+        Cleanup();
+        if(brandIcon!=null)brandIcon.Dispose();
+        if(brandImage!=null)brandImage.Dispose();
+        base.OnFormClosed(args);
+    }
+
+    void PostNodeEvent(Action action) {
+        if(!IsHandleCreated||IsDisposed||Disposing)return;
+        try{BeginInvoke(action);}catch(InvalidOperationException){}
     }
 
     void Full(TableLayoutPanel panel, Control control) {
@@ -226,9 +403,17 @@ sealed class NodeWindow : Form {
         checkMail.Visible = registerMail.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
         checkMail.Enabled = !working && node != null;
         registerMail.Enabled = !working && node != null && mailProfile != null;
+        trayStop.Enabled = !working && node != null;
+        trayExit.Enabled = !working;
+        var state = working ? L("A processar", "Working") : node == null ? L("Nó parado", "Node stopped") : L("Em execução", "Running");
+        connectionBadge.Text = state;
+        connectionBadge.BackColor = !working && node != null ? Mint : Color.FromArgb(44, 76, 69);
+        connectionBadge.ForeColor = !working && node != null ? Ink : Color.White;
+        tray.Text = "CellCloud Node · " + state;
     }
 
     async Task Run(Func<Task> action) {
+        if(working)return;
         working = true;
         RefreshButtons();
         try { await action(); }
@@ -285,19 +470,19 @@ sealed class NodeWindow : Form {
         var child = Helper("start");
         node = child;
         child.OutputDataReceived += (s,e) => {
-            if (e.Data != null && e.Data.Contains("\"event\":\"listening\"")) BeginInvoke(new Action(() => {
+            if (e.Data != null && e.Data.Contains("\"event\":\"listening\"")) PostNodeEvent(() => {
                 if (node == child && !working) status.Text = L("Nó a funcionar neste computador.", "Node running on this computer.");
-            }));
+            });
         };
         child.ErrorDataReceived += (s,e) => {
-            if (e.Data != null) BeginInvoke(new Action(() => { if (node == child) details.AppendText(e.Data + Environment.NewLine); }));
+            if (e.Data != null) PostNodeEvent(() => { if (node == child) details.AppendText(e.Data + Environment.NewLine); });
         };
-        child.Exited += (s,e) => BeginInvoke(new Action(() => {
+        child.Exited += (s,e) => PostNodeEvent(() => {
             if (node != child || working) return;
             Cleanup();
             status.Text = L("Nó parado. Consulta os detalhes se o arranque falhou.", "Node stopped. Check the details if startup failed.");
             RefreshButtons();
-        }));
+        });
         child.EnableRaisingEvents = true;
         child.BeginOutputReadLine();
         child.BeginErrorReadLine();
@@ -313,7 +498,7 @@ sealed class NodeWindow : Form {
                 info.EnvironmentVariables["XDG_CONFIG_HOME"] = Path.Combine(state,"proxy-config");
                 proxy = Process.Start(info);
                 proxy.ErrorDataReceived += (s,e) => {
-                    if (e.Data != null && e.Data.Contains("\"level\":\"error\"")) BeginInvoke(new Action(() => { if (node == child) details.AppendText(e.Data + Environment.NewLine); }));
+                    if (e.Data != null && e.Data.Contains("\"level\":\"error\"")) PostNodeEvent(() => { if (node == child) details.AppendText(e.Data + Environment.NewLine); });
                 };
                 proxy.BeginErrorReadLine();
             }

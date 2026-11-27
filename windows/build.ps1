@@ -42,7 +42,8 @@ if (Get-ChildItem -LiteralPath $app -Recurse -Attributes ReparsePoint) { throw '
 
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 $desktop = Join-Path $payload 'CellCloudNode.exe'
-& $compiler /nologo /target:winexe /platform:x64 /reference:System.Web.Extensions.dll "/out:$desktop" (Join-Path $PSScriptRoot 'NodeWindow.cs')
+$logo = Join-Path $PSScriptRoot 'assets/kaspa.png'
+& $compiler /nologo /target:winexe /platform:x64 /reference:System.Web.Extensions.dll "/resource:$logo,CellCloud.NodeIcon.png" "/out:$desktop" (Join-Path $PSScriptRoot 'NodeWindow.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Could not compile the desktop assistant.' }
 
 & $NodeExe (Join-Path $PSScriptRoot 'smoke.mjs') $payload $build
