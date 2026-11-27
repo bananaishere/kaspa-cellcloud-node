@@ -98,6 +98,8 @@ const mailReady=await request('prepare',mailSetup);
 assert.match(await fs.readFile(path.join(mailReady.state,'Caddyfile'),'utf8'),/handle \/kasmail\/v1\/\*/);
 const {mailSettings,checkMail}=await import(pathToFileURL(path.join(payload,'app','windows','mail.mjs')));
 const configMail=mailSettings(mailSetup,mailReady.state);
+const cloudflareSetup={...mailSetup,mailCloudflare:true};
+const cloudflareMail=mailSettings(cloudflareSetup,mailReady.state);
 let mailIdentity;
 const publicIdentity=await cycle({setup:mailSetup,verify:async(profile)=>{
  assert.equal(profile.url,'wss://node.example.com/peer');
@@ -109,8 +111,15 @@ const publicIdentity=await cycle({setup:mailSetup,verify:async(profile)=>{
  const denied=await fetch(`http://127.0.0.1:${mailPort}/kasmail/v1/hello?nonce=invalid`,{headers:{Origin:'https://unapproved.example.com',Host:'node.example.com'}});
  assert.equal(denied.status,403);
 }});
-assert.equal(await cycle({setup:mailSetup,verify:async()=>{
+let cloudflareIdentity;
+const verifyBothOrigins=async()=>{
  const signedMail=await checkMail(configMail,mailReady.state,{local:true});
  assert.equal(signedMail.id,mailIdentity);
-}}),publicIdentity);
-console.log('Windows payload passed: node restarts, persisted replication settings, optional mail identity and HTTPS route, and unapproved origin rejection.');
+ const signedCloudflare=await checkMail(cloudflareMail,mailReady.state,{local:true});
+ assert.notEqual(signedCloudflare.id,mailIdentity);
+ if(cloudflareIdentity)assert.equal(signedCloudflare.id,cloudflareIdentity);
+ cloudflareIdentity=signedCloudflare.id;
+};
+assert.equal(await cycle({setup:cloudflareSetup,verify:verifyBothOrigins}),publicIdentity);
+assert.equal(await cycle({setup:cloudflareSetup,verify:verifyBothOrigins}),publicIdentity);
+console.log('Windows payload passed: node restarts, persisted replication settings and separate k@sMail identities for both origins.');

@@ -5,8 +5,8 @@ Caddy are included. The interface follows your Windows language (Portuguese or
 English). Each mode has a separate storage directory and node identity. Existing
 command-line nodes and community registrations are independent of this installer.
 The right-hand guide has **Português** and **English** tabs. Open
-**Step-by-step guide** for the public, private, replication and mail
-walkthroughs. The same guide is
+**Step-by-step guide** for the public, private and mail walkthroughs.
+The same guide is
 [available in Portuguese](../docs/START_HERE.pt.md).
 
 If you already run a node, use the **Existing node** tab or the
@@ -39,24 +39,9 @@ before opening the prefilled GitHub registration. You review and submit the
 registration yourself. For the separate mail service, use the k@sMail guide in
 the app. [Public Testnet guide](../docs/PUBLIC_TESTNET.md)
 
-## Pair public nodes for replication
-
-1. Confirm with the other operator that both nodes should exchange public,
-   confirmed publications. Each operator controls their own configuration.
-2. In the Windows app, stop your public node and open **Replication → Add peer**.
-   Enter the other operator's public WSS address and Node ID, then save and start
-   the node. The other operator adds your public address and ID on their node.
-   Operators using the CLI add the peer to `peers` in their existing configuration.
-3. Use **Check connection** to see whether the peer is online and synchronizing.
-   While the service is running, open **Replication**, enter the full manifest ID
-   and click **Verify copy**. The count requires a recent signed read receipt and
-   applies to that manifest. Previously shared links with one endpoint may need
-   to be copied again from CellCloud with the additional endpoint included.
-
-If an RPC cannot supply historical headers, a verified publication may stay
-pending on the receiving node. Set a synced Testnet-10 wRPC that retains the
-required history and has a UTXO index in the advanced Replication field, with the
-node stopped. The receiving node still verifies the original payment.
+When two or more compatible nodes are available, CellCloud can distribute
+cells during a new public deployment. Enable wallet-authorized community
+uploads to participate. Existing manually paired nodes keep their settings.
 
 ## Build
 
@@ -78,7 +63,12 @@ With a public node stopped, enable **k@sMail** and choose a different
 local port from the file node. Start and select **Check k@sMail**, then
 **Open mail registration**. The program configures `/kasmail/v1/` on the
 existing HTTPS hostname and creates a separate mail identity and data
-folder. The pilot still needs to approve the profile for delivery.
+folder. Enable **Accept k@sMail on Cloudflare** to serve
+`https://kasmail.ramalholab.workers.dev` on the same public route and local
+mail port. Cloudflare uses a separate identity and storage folder. Existing
+Vercel mailboxes still use their original identity and storage. With Cloudflare
+enabled, the check and registration buttons refer to the Cloudflare profile.
+The pilot still needs to approve that profile for delivery.
 
 The test installer is unsigned. Keep local data, private configuration and
 keys out of the release.

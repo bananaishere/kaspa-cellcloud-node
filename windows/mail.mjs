@@ -3,16 +3,19 @@ import {randomUUID} from 'node:crypto';
 import {once} from 'node:events';
 import path from 'node:path';
 
-const origin='https://kasmail-cellcloud-nodes-bananalab360.vercel.app';
+const legacyOrigin='https://kasmail-cellcloud-nodes-bananalab360.vercel.app';
+const cloudflareOrigin='https://kasmail.ramalholab.workers.dev';
 const prefix='/kasmail/v1/';
 const bundled=Boolean(await import('node:fs/promises').then(fs=>fs.stat(new URL('../mail-kit/server/public-mail-node.mjs',import.meta.url)).then(()=>true,error=>{if(error.code!=='ENOENT')throw error;return false;})));
 
-export function mailSettings({isPublic,mailEnabled,mailPort,port,hostname,name},state){
+export function mailSettings({isPublic,mailEnabled,mailCloudflare,mailPort,port,hostname,name},state){
  if(mailEnabled!==true)return null;
  if(!isPublic||!bundled)throw Error('MAIL_REQUIRES_PUBLIC_MODE_AND_OPERATOR_KIT');
  if(!Number.isInteger(mailPort)||mailPort<1024||mailPort>65535||mailPort===port)throw Error('MAIL_REQUIRES_A_SEPARATE_PORT');
- return {enabled:true,network:'testnet-10',name,port:mailPort,data:path.join(state,'mail-storage'),
-  applicationOrigin:origin,publicUrl:`https://${hostname}${prefix}`};
+ const legacy={enabled:true,network:'testnet-10',name,port:mailPort,data:path.join(state,'mail-storage'),
+  applicationOrigin:legacyOrigin,publicUrl:`https://${hostname}${prefix}`};
+ if(mailCloudflare!==true)return legacy;
+ return {...legacy,data:path.join(state,'mail-storage-cloudflare'),applicationOrigin:cloudflareOrigin,legacy};
 }
 
 async function service(config,state){
@@ -22,7 +25,11 @@ async function service(config,state){
 
 export async function startMail(config,state){
  const {handler}=await service(config,state);
- const server=createServer(handler);
+ const legacy=config.legacy?await service(config.legacy,state):null;
+ const server=createServer((request,response)=>{
+  if(legacy&&request.headers.origin===config.legacy.applicationOrigin)return legacy.handler(request,response);
+  return handler(request,response);
+ });
  server.requestTimeout=15000;
  server.headersTimeout=10000;
  server.listen(config.port,'127.0.0.1');
@@ -31,6 +38,7 @@ export async function startMail(config,state){
 }
 
 export async function checkMail(config,state,{local=false}={}){
+ const origin=config.applicationOrigin;
  const {profile}=await service(config,state);
  const {verifyNodeSignature}=await import('../mail-kit/src/node-protocol.mjs');
  const nonce=randomUUID();

@@ -13,7 +13,7 @@
   padrão usa loopback e dispensa domínio, portas públicas e registo. A
   localização do nó por si só não cifra ficheiros.
 
-No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.11/CellCloud-Node-Testnet-0.2.0-testnet.11-Windows-x64.exe).
+No Windows x64, usa o [instalador da Testnet-10](https://github.com/bananaishere/kaspa-cellcloud-node/releases/download/windows-testnet.12/CellCloud-Node-Testnet-0.2.0-testnet.12-Windows-x64.exe).
 
 Para atualizar, fecha o programa e instala a nova versão sobre a anterior. Volta a usar a mesma pasta de dados e a mesma configuração para preservar a identidade pública. Com a opção **Aceitar uploads da comunidade por carteira**, o nó atualizado pode receber células de deploys repartidos. A CellCloud coordena esses envios quando encontra pelo menos dois nós compatíveis.
 Inclui Node.js e Caddy. Se preferires não usar o instalador, o percurso
@@ -223,30 +223,11 @@ precisa do domínio, do Caddy e do encaminhamento de portas.
 
 </details>
 
-## Replicação manual de ficheiros
+## Deploys distribuídos
 
-<details>
-<summary>Mostrar o ensaio de replicação</summary>
-
-Este ensaio é opcional. Combina a troca de publicações públicas confirmadas
-com outro operador. Cada um adiciona o endereço WSS e o Node ID do outro.
-
-1. No Windows, usa **Parar → Replicação → Adicionar nó → Guardar → Iniciar**.
-   No terminal, adiciona o vizinho a `peers` no JSON usado pelo serviço e
-   reinicia-o.
-2. Com o nó ligado, abre **Replicação**, cola o ID do manifesto e usa
-   **Verificar cópia**. Espera pela confirmação assinada. O estado geral
-   pode continuar pendente por outras publicações.
-3. Usa um link que inclua os dois nós, para o nó de origem e abre o link numa
-   sessão limpa. Volta a iniciar o nó e confirma que os dois comunicam.
-   Reutiliza a publicação e o pagamento existentes.
-
-Se o RPC não encontrar um cabeçalho antigo, mantém o registo pendente até
-verificar o pagamento num wRPC Testnet-10 sincronizado, indexado e com o
-histórico necessário. Configura-o em **Replicação → RPC Kaspa Testnet-10**
-com o nó parado, ou em `rpcUrl` no JSON.
-
-</details>
+Para disponibilizares o teu nó para novos deploys, ativa os uploads da
+comunidade por carteira. Quando há dois ou mais nós compatíveis, a CellCloud
+distribui as células durante o deploy.
 
 ## Serviço de correio k@sMail
 

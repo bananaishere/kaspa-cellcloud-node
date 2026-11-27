@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -29,9 +28,11 @@ static class Program {
 sealed class NodeWindow : Form {
     const string Guide = "https://kaspacellcloud.vercel.app/?operator-guide=1#nodes";
     const string Repository = "https://github.com/bananaishere/kaspa-cellcloud-node";
-    static readonly Color Canvas = Color.FromArgb(239, 245, 243), Ink = Color.FromArgb(20, 43, 41);
+    static readonly Color Canvas = Color.FromArgb(208, 222, 218), Ink = Color.FromArgb(20, 43, 41);
+    static readonly Color Surface = Color.FromArgb(231, 239, 236), GuideSurface = Color.FromArgb(218, 232, 227);
+    static readonly Color Input = Color.FromArgb(246, 250, 248), ButtonSurface = Color.FromArgb(224, 235, 231);
     static readonly Color Muted = Color.FromArgb(70, 92, 87), Teal = Color.FromArgb(23, 96, 84);
-    static readonly Color Mint = Color.FromArgb(110, 199, 185), Rule = Color.FromArgb(211, 224, 220);
+    static readonly Color Mint = Color.FromArgb(110, 199, 185), Rule = Color.FromArgb(164, 189, 181);
     readonly bool pt = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt";
     readonly string home, settings;
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
@@ -42,13 +43,14 @@ sealed class NodeWindow : Form {
     readonly NumericUpDown mailPort = new NumericUpDown { Minimum = 1024, Maximum = 65535, Value = 8081 };
     readonly CheckBox uploads = new CheckBox { AutoSize = true }, startup = new CheckBox { AutoSize = true };
     readonly CheckBox mailEnabled = new CheckBox { AutoSize = true };
+    readonly CheckBox mailCloudflare = new CheckBox { AutoSize = true, Checked = true };
     readonly Button start = new Button(), stop = new Button(), check = new Button(), register = new Button();
-    readonly Button replication = new Button();
     readonly Button checkMail = new Button(), registerMail = new Button();
+    readonly FlowLayoutPanel mailActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty };
     readonly Button moveToTray = new Button();
     readonly Label status = new Label { AutoSize = true, MaximumSize = new Size(520, 0) };
     readonly Label connectionBadge = new Label();
-    readonly TextBox details = new TextBox { ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, Height = 82 };
+    readonly TextBox details = new TextBox { ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, Height = 62 };
     readonly NotifyIcon tray = new NotifyIcon();
     readonly ContextMenuStrip trayMenu = new ContextMenuStrip();
     readonly ToolStripMenuItem trayStop = new ToolStripMenuItem(), trayExit = new ToolStripMenuItem();
@@ -87,7 +89,7 @@ sealed class NodeWindow : Form {
         var header = BuildHeader();
         frame.Controls.Add(header, 0, 0);
         frame.SetColumnSpan(header, 2);
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(18), Margin = new Padding(0, 0, 12, 0), ColumnCount = 2, AutoScroll = true, BackColor = Color.White };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(18), Margin = new Padding(0, 0, 12, 0), ColumnCount = 2, AutoScroll = true, BackColor = Surface };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 175));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         frame.Controls.Add(layout, 0, 1);
@@ -100,7 +102,9 @@ sealed class NodeWindow : Form {
         Row(layout, L("Nome público", "Public name"), name);
         Row(layout, L("Domínio público", "Public hostname"), domain);
         folder.Text = Path.Combine(Path.GetDirectoryName(settings), "data");
-        var browse = new Button { Text = L("Escolher…", "Browse…"), AutoSize = true, Dock = DockStyle.Right };
+        foreach(var field in new Control[] { mode, name, domain, folder, quota, port, mailPort, details }) field.BackColor = Input;
+        var browse = new Button { Text = L("Escolher…", "Browse…"), Dock = DockStyle.Right };
+        StyleButton(browse, false);
         browse.Click += (s, e) => { using(var dialog = new FolderBrowserDialog()) if(dialog.ShowDialog(this) == DialogResult.OK) folder.Text = dialog.SelectedPath; };
         var folderRow = new Panel { Height = 32 };
         folder.Dock = DockStyle.Fill;
@@ -114,34 +118,29 @@ sealed class NodeWindow : Form {
         Full(layout, uploads);
         mailEnabled.Text = L("Ativar nó de correio k@sMail (opcional)", "Enable k@sMail node (optional)");
         Full(layout, mailEnabled);
+        mailCloudflare.Text = L("Aceitar o k@sMail no Cloudflare", "Accept k@sMail on Cloudflare");
+        Full(layout, mailCloudflare);
         Row(layout, L("Porta local do correio", "Local mail port"), mailPort);
         Full(layout, startup);
-        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
+        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 6, 0, 0) };
         foreach(var button in new[] { start, stop, check, register }) { StyleButton(button, button == start); actions.Controls.Add(button); }
         start.Text = L("Iniciar", "Start"); stop.Text = L("Parar", "Stop");
         check.Text = L("Verificar ligação", "Check connection"); register.Text = L("Abrir registo público", "Open public registration");
         Full(layout, actions);
-        replication.Text = L("Replicação…", "Replication…");
         checkMail.Text = L("Verificar k@sMail", "Check k@sMail");
         registerMail.Text = L("Abrir registo de correio", "Open mail registration");
-        var extraActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        foreach (var button in new[] { replication, checkMail, registerMail, moveToTray }) { StyleButton(button, false); extraActions.Controls.Add(button); }
-        moveToTray.Text = L("Manter junto ao relógio", "Minimize to tray");
-        Full(layout, extraActions);
+        foreach (var button in new[] { checkMail, registerMail }) { StyleButton(button, false); mailActions.Controls.Add(button); }
+        Full(layout, mailActions);
         status.ForeColor = Muted;
         status.Margin = new Padding(0, 10, 0, 8);
         Full(layout, status);
         Full(layout, details);
-        var links = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        AddLink(links, L("Guia CellCloud", "CellCloud guide"), Guide);
-        var walkthrough = new LinkLabel { AutoSize = true, Text = L("Passo a passo", "Step-by-step guide"), Margin = new Padding(3, 8, 14, 0) };
-        walkthrough.LinkClicked += (s, e) => ShowWalkthrough();
-        links.Controls.Add(walkthrough);
-        AddLink(links, L("Configurar k@sMail", "Set up k@sMail"), Repository + "/blob/main/docs/PUBLIC_TESTNET.md");
-        var logs = new LinkLabel { AutoSize = true, Text = L("Pasta do nó", "Node folder") };
-        logs.LinkClicked += (s, e) => { if (Directory.Exists(folder.Text)) Open(folder.Text); };
-        links.Controls.Add(logs);
-        Full(layout, links);
+        var utilities = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 7, 0, 0) };
+        var logs = new Button { Text = L("Pasta do nó", "Node folder") };
+        logs.Click += (s, e) => { if (Directory.Exists(folder.Text)) Open(folder.Text); };
+        moveToTray.Text = L("Minimizar junto ao relógio", "Minimize to tray");
+        foreach(var button in new[] { logs, moveToTray }) { StyleButton(button, false); utilities.Controls.Add(button); }
+        Full(layout, utilities);
         status.Text = L("Nó parado.", "Node stopped.");
         LoadSettings();
         using (var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) startup.Checked = key != null && key.GetValue("CellCloudNode") != null;
@@ -159,7 +158,6 @@ sealed class NodeWindow : Form {
         register.Click += (s, e) => Register();
         checkMail.Click += async (s,e) => await Run(CheckMailNode);
         registerMail.Click += (s,e) => RegisterMailNode();
-        replication.Click += async (s, e) => await Run(ManageReplication);
         moveToTray.Click += (s,e) => HideInTray();
         SetUpTray();
         if(showRequest!=null){
@@ -201,55 +199,63 @@ sealed class NodeWindow : Form {
     }
 
     Control BuildSideGuide() {
-        var area = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Color.White, Padding = new Padding(13), Margin = Padding.Empty };
+        var area = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = GuideSurface, Padding = new Padding(14), Margin = Padding.Empty };
         area.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         area.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         area.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         area.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        area.RowStyles.Add(new RowStyle(SizeType.Absolute, 39));
         area.Controls.Add(new Label { Text = L("Como funciona", "How it works"), AutoSize = true, Font = new Font(Font.FontFamily, 14, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) }, 0, 0);
         var tabs = new TabControl { Dock = DockStyle.Fill, Margin = Padding.Empty, AccessibleName = L("Idioma da ajuda", "Help language") };
         tabs.TabPages.Add(SideGuidePage(true));
         tabs.TabPages.Add(SideGuidePage(false));
         tabs.SelectedIndex = pt ? 0 : 1;
         area.Controls.Add(tabs, 0, 1);
-        var guide = new Button { Text = L("Abrir guia completo…", "Open full guide…"), Anchor = AnchorStyles.Left };
-        StyleButton(guide, false);
+        var guide = new Button { Text = L("Guia passo a passo", "Step-by-step guide"), Dock = DockStyle.Fill, Margin = new Padding(0, 7, 0, 0) };
+        StyleButton(guide, true);
         guide.Click += (s,e) => ShowWalkthrough();
         area.Controls.Add(guide, 0, 2);
+        var website = new Button { Text = L("Abrir página Nós ↗", "Open Nodes page ↗"), Dock = DockStyle.Fill, Margin = new Padding(0, 5, 0, 0) };
+        StyleButton(website, false);
+        website.Click += (s,e) => Open(Guide);
+        area.Controls.Add(website, 0, 3);
         return area;
     }
 
     TabPage SideGuidePage(bool portuguese) {
-        var panel = new TabPage(portuguese ? "Português" : "English") { AutoScroll = true, BackColor = Color.White };
+        var panel = new TabPage(portuguese ? "Português" : "English") { AutoScroll = true, BackColor = Surface };
         var content = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, Padding = new Padding(10, 10, 6, 4) };
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         panel.Controls.Add(content);
         var items = portuguese ? new[,] {
-            {"Escolher o modo", "O modo privado guarda ficheiros neste PC. O modo público partilha espaço com a comunidade."},
-            {"Ligar e verificar", "Para um nó público, configura o domínio e as portas 80 e 443. Inicia o nó e verifica a ligação antes de registar o perfil."},
-            {"Receber deploys", "Ativa os uploads por carteira. A CellCloud reparte as células quando encontra dois ou mais nós compatíveis."},
-            {"Deixar o nó ligado", "Minimiza ou fecha a janela enquanto o nó corre. Usa o ícone junto ao relógio para abrir, parar ou sair."}
+            {"Escolher o modo", "Um nó privado guarda ficheiros neste PC. Um nó público partilha espaço com a comunidade."},
+            {"Ligar e verificar", "Para um nó público, configura o domínio e as portas 80 e 443. Verifica a ligação antes de registar."},
+            {"Receber deploys", "Ativa os uploads por carteira. As células são repartidas automaticamente se houver dois nós compatíveis ou mais."},
+            {"Deixar o nó ligado", "Fecha a janela e usa o ícone junto ao relógio para voltar a abrir, parar ou sair."}
         } : new[,] {
-            {"Choose a mode", "The private mode stores files on this PC. The public mode shares storage with the community."},
-            {"Start and check", "For a public node, set up your hostname and ports 80 and 443. Start the node and check connectivity before registering its profile."},
+            {"Choose a mode", "A private node stores files on this PC. A public node shares storage with the community."},
+            {"Start and check", "For a public node, set up your hostname and ports 80 and 443. Check the connection before registering."},
             {"Accept deployments", "Enable wallet-authorized uploads. CellCloud distributes cells when at least two compatible nodes are available."},
-            {"Keep the node running", "Minimize or close the window while the node is running. Use the icon by the clock to open, stop or exit."}
+            {"Keep the node running", "Close the window and use the icon by the clock to reopen, stop or exit."}
         };
         for(var index = 0; index < items.GetLength(0); index++) {
             content.Controls.Add(new Label { Text = items[index,0], AutoSize = true, Font = new Font(Font.FontFamily, 10, FontStyle.Bold), ForeColor = Teal, Margin = new Padding(0, 2, 0, 4) });
-            content.Controls.Add(new Label { Text = items[index,1], AutoSize = true, MaximumSize = new Size(222,0), ForeColor = Muted, Margin = new Padding(0, 0, 0, 13) });
+            content.Controls.Add(new Label { Text = items[index,1], AutoSize = true, MaximumSize = new Size(238,0), ForeColor = Muted, Margin = new Padding(0, 0, 0, 10) });
         }
         return panel;
     }
 
     static void StyleButton(Button button, bool primary) {
         button.AutoSize = true;
-        button.Padding = new Padding(5, 2, 5, 2);
+        button.MinimumSize = new Size(0, 32);
+        button.Padding = new Padding(7, 2, 7, 2);
         button.FlatStyle = FlatStyle.Flat;
         button.UseVisualStyleBackColor = false;
-        button.BackColor = primary ? Teal : Canvas;
+        button.BackColor = primary ? Teal : ButtonSurface;
         button.ForeColor = primary ? Color.White : Ink;
         button.FlatAppearance.BorderColor = primary ? Teal : Rule;
+        button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(30, 112, 98) : Canvas;
+        button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(16, 76, 67) : GuideSurface;
     }
 
     void SetUpTray() {
@@ -328,12 +334,6 @@ sealed class NodeWindow : Form {
     static void Open(string target) { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); }
     static string Quote(string value) { return "\"" + value + "\""; }
 
-    void AddLink(FlowLayoutPanel panel, string title, string target) {
-        var link = new LinkLabel { Text = title, AutoSize = true, Margin = new Padding(3, 8, 14, 0) };
-        link.LinkClicked += (s, e) => Open(target);
-        panel.Controls.Add(link);
-    }
-
     void ShowWalkthrough() {
         using (var dialog = new Form { Text = L("Guia do operador · Testnet-10", "Operator guide · Testnet-10"),
             StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(640,330), MinimumSize = new Size(590,335), Font = Font }) {
@@ -358,12 +358,9 @@ sealed class NodeWindow : Form {
             GuidePage(tabs, L("Privado", "Private"), L(
                 "1. Escolhe Privado neste computador. Define a pasta e o espaço.\r\n\r\n2. Usa Iniciar → Verificar ligação. Na app local, liga a carteira Testnet-10 e abre Nós → O meu nó privado. Confirma o endereço e o Node ID.\r\n\r\n3. Para autorizar uploads, abre Pasta do nó e procura private-testnet/storage/testnet-10/upload-token.private.json. Usa o token apenas na app local. Este modo funciona neste computador sem registo público.\r\n\r\nPara correr os dois modos em simultâneo, usa o programa para o nó público e o terminal para o privado. Usa pastas, Node IDs e portas diferentes.",
                 "1. Choose Private on this computer. Set the folder and storage limit.\r\n\r\n2. Use Start → Check connection. In the local app, connect your Testnet-10 wallet and open Nodes → My private node. Verify the address and Node ID.\r\n\r\n3. To authorize uploads, open Node folder and find private-testnet/storage/testnet-10/upload-token.private.json. Use the token only in the local app. This mode works on this computer without public registration.\r\n\r\nTo run both modes at once, use the program for the public node and a terminal for the private node. Use separate folders, Node IDs and ports."), Guide);
-            GuidePage(tabs, L("Replicação", "Replication"), L(
-                "Este é um teste opcional. Combina-o com o outro operador. Cada um adiciona o endereço WSS e o Node ID do outro. Isto pode sincronizar outras publicações públicas confirmadas.\r\n\r\nUsa Parar → Replicação → Adicionar nó → Guardar → Iniciar. Depois abre Replicação, cola o ID do manifesto e usa Verificar cópia. Só testa uma falha depois de confirmares a cópia e preparares um link com ambos os nós.\r\n\r\nSe o RPC não encontrar um cabeçalho antigo, confirma se tens um RPC Testnet-10 sincronizado que retenha o histórico necessário. O campo avançado em Replicação permite indicar esse endereço.",
-                "This is an optional test. Agree with the other operator. Each adds the other’s WSS address and Node ID. This can sync other confirmed public publications.\r\n\r\nUse Stop → Replication → Add peer → Save → Start. Then open Replication, paste the manifest ID and use Verify copy. Test an outage only after confirming the copy and preparing a link with both nodes.\r\n\r\nIf the RPC cannot find an old header, use a synced Testnet-10 RPC that retains the required history. The advanced Replication field can set that endpoint."), Guide);
             GuidePage(tabs, "k@sMail", L(
-                "1. Com o nó parado, escolhe Público da comunidade e marca Ativar nó de correio k@sMail. A porta do correio tem de ser diferente da porta de ficheiros.\r\n\r\n2. Usa Iniciar → Verificar k@sMail. O programa cria a identidade de correio e verifica o endereço HTTPS /kasmail/v1/.\r\n\r\n3. Usa Abrir registo de correio e submete apenas o perfil público no GitHub. Aguarda a aprovação da identidade no piloto. A pasta de correio local contém dados privados.",
-                "1. With the node stopped, choose Public community node and enable k@sMail. Use a different local port from the file node.\r\n\r\n2. Select Start → Check k@sMail. The program creates the mail identity and checks the /kasmail/v1/ HTTPS endpoint.\r\n\r\n3. Choose Open mail registration and submit only the public profile on GitHub. Wait for identity approval in the pilot. Keep the local mail folder private."), Guide);
+                "1. Com o nó parado, ativa k@sMail e escolhe se aceitas o endereço do Cloudflare. A porta local do correio tem de ser diferente da dos ficheiros.\r\n\r\n2. Usa Iniciar → Verificar k@sMail. Para o Cloudflare, o programa verifica uma identidade de correio separada. As caixas existentes na Vercel continuam a usar a identidade anterior.\r\n\r\n3. Usa Abrir registo de correio e submete apenas o perfil público no GitHub. Aguarda a aprovação da identidade no piloto.",
+                "1. With the node stopped, enable k@sMail and choose whether to accept the Cloudflare address. The local mail port must differ from the file port.\r\n\r\n2. Select Start → Check k@sMail. For Cloudflare, the program checks a separate mail identity. Existing Vercel mailboxes keep using the previous identity.\r\n\r\n3. Choose Open mail registration and submit only the public profile on GitHub. Wait for identity approval in the pilot."), Guide);
             dialog.ShowDialog(this);
         }
     }
@@ -387,6 +384,7 @@ sealed class NodeWindow : Form {
             folder.Text = (string)values["folder"]; quota.Value = Convert.ToDecimal(values["quotaGiB"]);
             port.Value = Convert.ToDecimal(values["port"]); uploads.Checked = (bool)values["uploads"];
             if (values.ContainsKey("mailEnabled")) mailEnabled.Checked = (bool)values["mailEnabled"];
+            mailCloudflare.Checked = values.ContainsKey("mailCloudflare") && (bool)values["mailCloudflare"];
             if (values.ContainsKey("mailPort")) mailPort.Value = Convert.ToDecimal(values["mailPort"]);
         } catch { status.Text = L("Confirma os dados da configuração.", "Review your configuration."); }
     }
@@ -397,10 +395,11 @@ sealed class NodeWindow : Form {
         foreach (var control in new Control[] { name, domain, uploads }) control.Enabled = idle && mode.SelectedIndex == 1;
         start.Enabled = idle; stop.Enabled = check.Enabled = !working && node != null;
         register.Enabled = !working && node != null && publicProfile != null;
-        replication.Enabled = !working && mode.SelectedIndex == 1;
         mailEnabled.Enabled = idle && mode.SelectedIndex == 1;
+        mailCloudflare.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
+        mailCloudflare.Enabled = idle;
         mailPort.Enabled = mailEnabled.Enabled && mailEnabled.Checked;
-        checkMail.Visible = registerMail.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
+        mailActions.Visible = mode.SelectedIndex == 1 && mailEnabled.Checked;
         checkMail.Enabled = !working && node != null;
         registerMail.Enabled = !working && node != null && mailProfile != null;
         trayStop.Enabled = !working && node != null;
@@ -455,7 +454,8 @@ sealed class NodeWindow : Form {
         return new Dictionary<string, object> {
             {"isPublic", mode.SelectedIndex == 1}, {"name", name.Text.Trim()}, {"hostname", domain.Text.Trim().ToLowerInvariant()},
             {"folder", folder.Text.Trim()}, {"quotaGiB", (int)quota.Value}, {"port", (int)port.Value}, {"uploads", uploads.Checked},
-            {"mailEnabled", mode.SelectedIndex == 1 && mailEnabled.Checked}, {"mailPort", (int)mailPort.Value}
+            {"mailEnabled", mode.SelectedIndex == 1 && mailEnabled.Checked}, {"mailPort", (int)mailPort.Value},
+            {"mailCloudflare", mailCloudflare.Checked}
         };
     }
 
@@ -544,102 +544,6 @@ sealed class NodeWindow : Form {
             publicProfile = json.Serialize(profile);
         } else {
             status.Text = L("Nó ligado neste PC. WSS ainda inacessível daqui. Confirma DNS, certificado, portas e router.", "Node running on this PC. WSS is not yet reachable from here. Check DNS, certificate, ports and router.");
-        }
-        var sync = report["replication"] as Dictionary<string, object>;
-        if (sync != null) foreach (Dictionary<string, object> entry in (IEnumerable)sync["peers"]) {
-            bool online = entry.ContainsKey("online") && (bool)entry["online"];
-            bool pending = entry.ContainsKey("pending") && (bool)entry["pending"];
-            string state = online ? (pending ? L("sincronização pendente", "sync pending") : L("sincronização em dia", "in sync")) : L("a aguardar ligação", "waiting for connection");
-            details.AppendText(Environment.NewLine + entry["url"] + " · " + state);
-        }
-    }
-
-    async Task ManageReplication() {
-        var request = NodeSettings();
-        var saved = await Request("replica-settings", json.Serialize(request));
-        bool running = node != null;
-        using (var dialog = new Form { Text = L("Replicação Testnet-10", "Testnet-10 replication"), StartPosition = FormStartPosition.CenterParent,
-            ClientSize = new Size(690, 340), MinimumSize = new Size(630, 375), Font = Font, MinimizeBox = false, MaximizeBox = false }) {
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 1, AutoScroll = true };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            dialog.Controls.Add(layout);
-            string help = running ? L("Para editar os nós, para primeiro o serviço. Para verificar uma publicação, cola o ID do manifesto abaixo.", "Stop the service before editing peers. Paste a manifest ID below to verify a copy.") :
-                L("Adiciona apenas nós com o acordo dos operadores. Cada operador tem de adicionar o outro. A sincronização abrange publicações públicas já confirmadas, dentro dos limites do nó.",
-                  "Add only peers whose operators agree. Each operator must add the other. Synchronization includes already confirmed public publications, within the node limits.");
-            Full(layout, new Label { Text = help, AutoSize = true, MaximumSize = new Size(575, 0), Margin = new Padding(0,0,0,8) });
-            var grid = new DataGridView { Dock = DockStyle.Fill, Height = 130, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                AllowUserToAddRows = false, AllowUserToDeleteRows = false, RowHeadersVisible = false, ReadOnly = running,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect, MultiSelect = false };
-            grid.Columns.Add("url", L("Endereço WSS", "WSS address"));
-            grid.Columns.Add("nodeId", "Node ID");
-            foreach (Dictionary<string, object> entry in (IEnumerable)saved["peers"]) grid.Rows.Add(entry["url"], entry["nodeId"]);
-            Full(layout, grid);
-            var feedback = new Label { AutoSize = true, MaximumSize = new Size(575, 0) };
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-            bool pending = false;
-            dialog.FormClosing += (s, e) => e.Cancel = pending;
-            if (running) {
-                Full(layout, new Label { Text = L("ID do manifesto", "Manifest ID"), AutoSize = true });
-                var manifest = new TextBox { MaxLength = 64 };
-                Full(layout, manifest);
-                var verify = new Button { Text = L("Verificar cópia", "Verify copy"), AutoSize = true };
-                buttons.Controls.Add(verify);
-                verify.Click += async (s, e) => {
-                    pending = true;
-                    verify.Enabled = false;
-                    feedback.Text = L("A verificar…", "Checking…");
-                    try {
-                        request["manifestId"] = manifest.Text.Trim().ToLowerInvariant();
-                        var result = await Request("replica-copy", json.Serialize(request));
-                        feedback.Text = String.Format(L("Cópias com verificação assinada recente: {0} / {1}.", "Copies with a recent signed verification: {0} / {1}."), result["verified"], result["configured"]);
-                    } catch (Exception error) {
-                        feedback.Text = error.Message.Contains("MANIFEST_ID_REQUIRED") ? L("Introduz o ID completo do manifesto (64 caracteres).", "Enter the full manifest ID (64 characters).") :
-                            L("Não foi possível verificar a publicação neste nó. Confirma o manifesto e o estado do pagamento.", "Could not verify the publication on this node. Check the manifest and payment status.");
-                    } finally { pending = false; verify.Enabled = true; }
-                };
-            } else {
-                Full(layout, new Label { Text = L("RPC Kaspa Testnet-10 (opcional, avançado)", "Kaspa Testnet-10 RPC (optional, advanced)"), AutoSize = true });
-                var rpc = new TextBox { Text = (string)saved["rpcUrl"], MaxLength = 1024, AccessibleName = "RPC Testnet-10" };
-                Full(layout, rpc);
-                var add = new Button { Text = L("Adicionar nó", "Add peer"), AutoSize = true };
-                var remove = new Button { Text = L("Remover da lista", "Remove from list"), AutoSize = true };
-                var save = new Button { Text = L("Guardar", "Save"), AutoSize = true };
-                buttons.Controls.AddRange(new Control[] { add, remove, save });
-                add.Click += (s, e) => {
-                    if (grid.Rows.Count >= 3) { feedback.Text = L("O limite é de três nós.", "The limit is three peers."); return; }
-                    grid.CurrentCell = grid.Rows[grid.Rows.Add()].Cells[0];
-                    grid.BeginEdit(true);
-                };
-                remove.Click += (s, e) => { if (grid.CurrentRow != null) grid.Rows.Remove(grid.CurrentRow); };
-                save.Click += async (s, e) => {
-                    grid.EndEdit();
-                    var peers = new List<object>();
-                    foreach (DataGridViewRow row in grid.Rows) peers.Add(new {
-                        url = Convert.ToString(row.Cells[0].Value).Trim(), nodeId = Convert.ToString(row.Cells[1].Value).Trim().ToLowerInvariant()
-                    });
-                    pending = true;
-                    grid.Enabled = buttons.Enabled = false;
-                    bool success = false;
-                    try {
-                        request["peers"] = peers;
-                        request["rpcUrl"] = rpc.Text.Trim();
-                        await Request("save-replica-settings", json.Serialize(request));
-                        status.Text = L("Replicação guardada. Inicia o nó para aplicar a configuração.", "Replication saved. Start the node to apply the settings.");
-                        success = true;
-                    } catch (Exception error) {
-                        feedback.Text = L("Confirma os endereços wss://…/peer e os IDs de 64 caracteres. A lista não aceita duplicados nem o próprio nó.",
-                            "Check the wss://…/peer addresses and 64-character IDs. Duplicates and this node are not allowed.");
-                        if (error.Message.Contains("EPERM") || error.Message.Contains("EACCES"))
-                            feedback.Text = L("Não foi possível escrever na pasta de dados.", "Could not write to the data folder.");
-                        if (error.Message.Contains("INVALID_OPERATOR_RPC"))
-                            feedback.Text = L("Usa um endereço WSS válido para o RPC, ou deixa o campo vazio.", "Enter a valid RPC WSS address or leave the field blank.");
-                    } finally { pending = false; grid.Enabled = buttons.Enabled = true; }
-                    if (success) dialog.Close();
-                };
-            }
-            Full(layout, buttons);
-            Full(layout, feedback);
-            dialog.ShowDialog(this);
         }
     }
 
